@@ -1,0 +1,119 @@
+version: 2
+
+models:
+  - name: stg_loans
+    description: "Typed and standardised loan tape. One row per loan. No business logic."
+    columns:
+      - name: loan_id
+        description: "Primary key. UUID."
+        data_tests: [unique, not_null]
+      - name: merchant_id
+        description: "Foreign key to merchant dimension."
+        data_tests: [not_null]
+      - name: platform
+        description: "Originating platform in lowercase."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['doordash', 'amazon', 'mindbody', 'worldpay', 'shopify']
+      - name: origination_date
+        description: "Date the loan was originated."
+        data_tests: [not_null]
+      - name: principal_amount
+        description: "Funded principal in USD."
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2500
+              max_value: 150000
+      - name: term_days
+        description: "Loan term in days."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [90, 180, 270, 365]
+      - name: factor_rate
+        description: "MCA factor rate."
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1.05
+              max_value: 1.50
+      - name: repayment_type
+        description: "Repayment cadence type."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['daily_revenue_share', 'fixed_daily', 'weekly']
+      - name: spv_id
+        description: "SPV assignment."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['SPV-A', 'SPV-B', 'SPV-C']
+      - name: underwriting_score
+        description: "Credit score 1–100."
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 100
+
+  - name: stg_payments
+    description: "Typed payment events. One row per payment event."
+    columns:
+      - name: payment_id
+        description: "Primary key. UUID."
+        data_tests: [unique, not_null]
+      - name: loan_id
+        description: "Foreign key to stg_loans."
+        data_tests: [not_null]
+      - name: payment_date
+        description: "Date of payment or missed payment."
+        data_tests: [not_null]
+      - name: payment_amount
+        description: "Amount paid. 0 for missed."
+        data_tests: [not_null]
+      - name: payment_type
+        description: "Payment classification."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['scheduled', 'early_payoff', 'missed']
+      - name: days_past_due
+        description: "Days past due at time of event."
+        data_tests: [not_null]
+      - name: is_missed
+        description: "True if payment_type = missed."
+        data_tests: [not_null]
+
+  - name: stg_platforms
+    description: "Static platform metadata."
+    columns:
+      - name: platform
+        description: "Platform key."
+        data_tests: [unique, not_null]
+      - name: category
+        description: "Platform category."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['food_delivery', 'ecommerce', 'fitness', 'payments']
+
+  - name: stg_spv_allocation
+    description: "SPV facility definitions and covenant thresholds."
+    columns:
+      - name: spv_id
+        description: "SPV identifier."
+        data_tests: [unique, not_null]
+      - name: facility_limit
+        description: "Maximum draw in USD."
+        data_tests: [not_null]
+      - name: covenant_max_delinquency_pct
+        description: "Max allowed delinquency rate."
+        data_tests: [not_null]

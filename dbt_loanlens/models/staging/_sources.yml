@@ -1,0 +1,91 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Raw tables loaded from synthetic CSV files via seed_snowflake.py"
+    database: "{{ env_var('SNOWFLAKE_DATABASE', 'LOANLENS') }}"
+    schema: "{{ env_var('SNOWFLAKE_SCHEMA_RAW', 'RAW') }}"
+    tables:
+      - name: loans
+        description: "Raw loan tape — 10,000 synthetic MCA loans."
+        columns:
+          - name: loan_id
+            description: "Primary key. UUID."
+          - name: merchant_id
+            description: "Foreign key to merchant dimension."
+          - name: platform
+            description: "Originating platform (doordash, amazon, etc.)."
+          - name: origination_date
+            description: "Date the loan was originated."
+          - name: principal_amount
+            description: "Funded principal in USD."
+          - name: term_days
+            description: "Loan term in days (90 / 180 / 270 / 365)."
+          - name: factor_rate
+            description: "MCA factor rate (1.10–1.45). total_owed = principal * factor_rate."
+          - name: repayment_type
+            description: "daily_revenue_share | fixed_daily | weekly"
+          - name: revenue_share_pct
+            description: "Revenue share percentage. Null for non-revenue-share loans."
+          - name: spv_id
+            description: "SPV assignment: SPV-A, SPV-B, or SPV-C."
+          - name: underwriting_score
+            description: "Credit score 1–100. Inversely correlated with default probability."
+
+      - name: payments
+        description: "Payment events for all loans (~180,000 rows)."
+        columns:
+          - name: payment_id
+            description: "Primary key. UUID."
+          - name: loan_id
+            description: "Foreign key to loans."
+          - name: payment_date
+            description: "Date the payment was made or missed."
+          - name: payment_amount
+            description: "Amount paid. 0 for missed payments."
+          - name: payment_type
+            description: "scheduled | early_payoff | missed"
+          - name: days_past_due
+            description: "Days past due at time of payment. 0 for on-time payments."
+          - name: cumulative_repaid
+            description: "Running total repaid for this loan up to this payment."
+
+      - name: platform_metadata
+        description: "Static metadata for each lending platform."
+        columns:
+          - name: platform
+            description: "Platform key. Matches loans.platform."
+          - name: platform_display_name
+            description: "Human-readable platform name."
+          - name: category
+            description: "food_delivery | ecommerce | fitness | payments"
+          - name: avg_merchant_gmv
+            description: "Average annual GMV for merchants on this platform."
+          - name: partner_since
+            description: "Date the platform partnership began."
+
+      - name: spv_allocation
+        description: "SPV facility definitions and covenant thresholds."
+        columns:
+          - name: spv_id
+            description: "SPV identifier: SPV-A, SPV-B, SPV-C."
+          - name: facility_name
+            description: "Full facility name (investor name + tranche)."
+          - name: facility_limit
+            description: "Maximum draw on this facility in USD."
+          - name: facility_drawn
+            description: "Current outstanding (stub — recalculated in fct_spv_allocation)."
+          - name: covenant_max_delinquency_pct
+            description: "Max allowed delinquency rate before covenant breach."
+          - name: covenant_min_yield
+            description: "Minimum annualized yield required by the facility."
+          - name: facility_inception_date
+            description: "Date the facility was established."
+
+      - name: control_totals
+        description: "Source-of-truth control file — simulates servicing system export for reconciliation."
+        columns:
+          - name: metric_name
+            description: "Metric identifier: origination_count | origination_principal | total_collected | default_count"
+          - name: source_value
+            description: "Value from the source system."

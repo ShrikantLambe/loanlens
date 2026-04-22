@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: int_loan_status
+    description: >
+      Derives the current status of each loan from its payment history.
+      This is the primary credit risk model. All downstream mart models join here.
+    columns:
+      - name: loan_id
+        description: "Primary key inherited from stg_loans."
+        data_tests: [unique, not_null]
+      - name: loan_status
+        description: "Derived loan classification."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['current', 'paid_off', 'default', 'delinquent_30',
+                         'delinquent_60', 'delinquent_90']
+      - name: pct_repaid
+        description: "Fraction of total_owed that has been repaid. 0–1 range."
+        data_tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1.05
+      - name: total_owed
+        description: "principal_amount * factor_rate."
+        data_tests: [not_null]
+
+  - name: int_cohort_assignments
+    description: "Monthly vintage cohort labels for each loan."
+    columns:
+      - name: loan_id
+        description: "Primary key."
+        data_tests: [unique, not_null]
+      - name: cohort_label
+        description: "e.g. MV-2022-01"
+        data_tests: [not_null]
+
+  - name: int_payment_schedule
+    description: "Payment-level aggregates per loan — on-time rates, missed counts."
+    columns:
+      - name: loan_id
+        description: "Primary key."
+        data_tests: [unique, not_null]

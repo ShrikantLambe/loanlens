@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: fct_portfolio_daily
+    description: "Daily portfolio health snapshot. One row per calendar date."
+    columns:
+      - name: date_day
+        description: "Calendar date."
+        data_tests: [unique, not_null]
+      - name: active_loan_count
+        description: "Number of active loans on this date."
+      - name: outstanding_principal
+        description: "Sum of principal for all active loans."
+      - name: delinquency_rate
+        description: "Delinquent principal / outstanding principal."
+      - name: default_rate
+        description: "Defaulted principal / outstanding principal."
+
+  - name: fct_originations
+    description: "Monthly origination volume aggregated by platform and SPV."
+    columns:
+      - name: origination_month
+        description: "First day of the origination month."
+        data_tests: [not_null]
+      - name: platform
+        description: "Originating platform."
+        data_tests: [not_null]
+      - name: loan_count
+        description: "Number of loans originated in this period."
+      - name: origination_volume
+        description: "Total principal originated in USD."
+
+  - name: fct_cohort_performance
+    description: "Cohort repayment curves. One row per cohort × months-on-book."
+    columns:
+      - name: cohort_label
+        description: "e.g. MV-2022-01"
+        data_tests: [not_null]
+      - name: months_on_book
+        description: "Months elapsed since origination."
+        data_tests: [not_null]
+      - name: cumulative_default_rate
+        description: "Cumulative defaulted principal / cohort principal."
+
+  - name: fct_spv_allocation
+    description: "SPV-level portfolio summary with covenant breach flags. One row per SPV."
+    columns:
+      - name: spv_id
+        description: "SPV identifier."
+        data_tests: [unique, not_null]
+      - name: covenant_delinquency_breach
+        description: "True if delinquency_rate > covenant_max_delinquency_pct."
+        data_tests: [not_null]
+      - name: facility_utilization
+        description: "total_principal / facility_limit."

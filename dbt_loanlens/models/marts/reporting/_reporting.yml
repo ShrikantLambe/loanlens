@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: rpt_portfolio_summary
+    description: >
+      Single-row wide portfolio summary consumed by the AI narrator.
+      Self-describing column names — the LLM reads this directly.
+    columns:
+      - name: report_date
+        description: "Date this report was generated."
+        data_tests: [not_null]
+      - name: total_loans
+        description: "Total loans ever originated."
+        data_tests: [not_null]
+      - name: delinquency_rate_pct
+        description: "Delinquent principal / total originated * 100."
+      - name: default_rate_pct
+        description: "Defaulted principal / total originated * 100."
+
+  - name: rpt_reconciliation
+    description: >
+      Warehouse totals vs. source system control file.
+      Drives the reconciliation audit page. FAIL rows trigger a dbt test failure.
+    columns:
+      - name: metric_name
+        description: "Metric identifier."
+        data_tests: [unique, not_null]
+      - name: reconciliation_status
+        description: "PASS or FAIL."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['PASS', 'FAIL']
+
+  - name: rpt_covenant_compliance
+    description: "Per-SPV covenant status. One row per SPV."
+    columns:
+      - name: spv_id
+        description: "SPV identifier."
+        data_tests: [unique, not_null]
+      - name: delinquency_covenant_status
+        description: "BREACH or OK."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['BREACH', 'OK']
