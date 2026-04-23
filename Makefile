@@ -4,6 +4,10 @@ PYTHON = .venv/bin/python
 DBT    = .venv/bin/dbt
 PYTEST = .venv/bin/pytest
 
+# WeasyPrint (PDF export) requires pango/gobject from Homebrew on macOS.
+# Homebrew installs to /opt/homebrew/lib which is not on the default dyld path.
+export DYLD_LIBRARY_PATH := /opt/homebrew/lib:$(DYLD_LIBRARY_PATH)
+
 seed:
 	$(PYTHON) data_gen/generate_loans.py
 	$(PYTHON) data_gen/generate_payments.py
