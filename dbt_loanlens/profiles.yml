@@ -1,0 +1,8 @@
+loanlens:
+  target: duckdb
+  outputs:
+    duckdb:
+      type: duckdb
+      path: "../loanlens.duckdb"
+      schema: analytics
+      threads: 4

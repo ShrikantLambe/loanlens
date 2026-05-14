@@ -12,15 +12,13 @@ env/
 .env
 *.env
 
-# Data files (generated)
-data_gen/output/*.csv
+# Data files (the .duckdb binary is generated at runtime — commit the CSVs)
 *.duckdb
 
 # dbt
 dbt_loanlens/target/
 dbt_loanlens/dbt_packages/
 dbt_loanlens/logs/
-dbt_loanlens/profiles.yml
 
 # Streamlit
 .streamlit/secrets.toml

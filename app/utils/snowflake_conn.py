@@ -15,7 +15,14 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-_USE_DUCKDB = os.environ.get("USE_DUCKDB_FALLBACK", "false").lower() == "true"
+# Use DuckDB when explicitly requested OR when Snowflake credentials are absent
+_USE_DUCKDB = os.environ.get("USE_DUCKDB_FALLBACK", "false").lower() == "true" or not all(
+    [
+        os.environ.get("SNOWFLAKE_ACCOUNT"),
+        os.environ.get("SNOWFLAKE_USER"),
+        os.environ.get("SNOWFLAKE_PASSWORD"),
+    ]
+)
 _DUCKDB_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "loanlens.duckdb")
 
 _DBT_SCHEMA = os.environ.get("SNOWFLAKE_SCHEMA_DBT", "analytics").lower()
