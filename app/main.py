@@ -76,21 +76,21 @@ with st.sidebar:
 
 # --- Page routing ---
 if "Portfolio Overview" in page:
-    from app.pages.overview import render
+    from app.views.overview import render
     render()
 
 elif "Cohort Analysis" in page:
-    from app.pages.cohort_analysis import render
+    from app.views.cohort_analysis import render
     render()
 
 elif "SPV Reporting" in page:
-    from app.pages.spv_reporting import render
+    from app.views.spv_reporting import render
     render()
 
 elif "Reconciliation Audit" in page:
-    from app.pages.reconciliation import render
+    from app.views.reconciliation import render
     render()
 
 elif "Investor Memo" in page:
-    from app.pages.investor_memo import render
+    from app.views.investor_memo import render
     render()

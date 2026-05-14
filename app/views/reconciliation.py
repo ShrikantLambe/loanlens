@@ -72,7 +72,7 @@ def render() -> None:
             return "color: #16a34a; font-weight: bold"
         return "color: #dc2626; font-weight: bold"
 
-    styled = display.style.applymap(_color_status, subset=["reconciliation_status"])
+    styled = display.style.map(_color_status, subset=["reconciliation_status"])
     st.dataframe(styled, use_container_width=True, hide_index=True)
 
     st.divider()
