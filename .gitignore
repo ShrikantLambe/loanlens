@@ -14,6 +14,8 @@ env/
 
 # Data files (the .duckdb binary is generated at runtime — commit the CSVs)
 *.duckdb
+# Pre-built Parquet snapshots committed intentionally (app/data/*.parquet)
+data_gen/output/
 
 # dbt
 dbt_loanlens/target/
