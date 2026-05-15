@@ -160,22 +160,40 @@ def render() -> None:
     with c3:
         delinq_pct   = float(row.get("delinquency_rate_pct", 0))
         delinq_delta = _delta("delinquency_rate")
+        _d_label = (
+            f"{delinq_delta*100:+.2f}pp (30d trend)"
+            if delinq_delta is not None and abs(delinq_delta) > 0.0001
+            else None
+        )
         st.metric(
             "Delinquency Rate",
             f"{delinq_pct:.2f}%",
-            delta=f"{delinq_delta*100:+.2f}pp vs 30d" if delinq_delta is not None else None,
+            delta=_d_label,
             delta_color="inverse",
-            help="% of outstanding principal 30+ DPD. Source: rpt_portfolio_summary.",
+            help=(
+                "Current delinquency: % of outstanding principal 30+ DPD "
+                "(source: rpt_portfolio_summary). "
+                "Delta pp = 30-day change from fct_delinquency_weekly trend model."
+            ),
         )
     with c4:
-        default_pct  = float(row.get("default_rate_pct", 0))
+        default_pct   = float(row.get("default_rate_pct", 0))
         default_delta = _delta("default_rate")
+        _def_label = (
+            f"{default_delta*100:+.2f}pp (30d trend)"
+            if default_delta is not None and abs(default_delta) > 0.0001
+            else None
+        )
         st.metric(
             "Default Rate",
             f"{default_pct:.2f}%",
-            delta=f"{default_delta*100:+.2f}pp vs 30d" if default_delta is not None else None,
+            delta=_def_label,
             delta_color="inverse",
-            help="% of outstanding principal 90+ DPD (hard default). Source: rpt_portfolio_summary.",
+            help=(
+                "Hard default: % of outstanding principal 90+ DPD "
+                "(source: rpt_portfolio_summary). "
+                "Delta pp = 30-day change from fct_delinquency_weekly trend model."
+            ),
         )
 
     st.divider()

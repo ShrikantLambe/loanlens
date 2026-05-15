@@ -336,15 +336,25 @@ def repayment_curves_chart(df: pd.DataFrame, cohorts: list[str]) -> go.Figure:
 
 def spv_covenant_comparison_chart(df: pd.DataFrame) -> go.Figure:
     """
-    Grouped bar: delinquency rate (colored red if breach) vs covenant limit per SPV.
-    The gap between the bars is the headroom — instantly readable.
-    """
-    spv = df.sort_values("spv_id")
+    Grouped bar: delinquency rate vs covenant limit per SPV.
 
-    bar_colors = [
-        BRAND_COLORS["danger"] if b else BRAND_COLORS["accent"]
-        for b in spv["covenant_delinquency_breach"]
-    ]
+    Colour logic:
+      - Red   : covenant breached
+      - Amber : within 2pp of covenant (watch zone)
+      - Blue  : healthy headroom
+    Healthy SPVs get a headroom annotation above their bar.
+    """
+    spv = df.sort_values("spv_id").copy()
+    spv["headroom"] = spv["covenant_max_delinquency_pct"] - spv["delinquency_rate"]
+
+    def _bar_color(row: pd.Series) -> str:
+        if bool(row["covenant_delinquency_breach"]):
+            return BRAND_COLORS["danger"]
+        if float(row["headroom"]) < 0.02:          # within 2pp
+            return BRAND_COLORS["warning"]
+        return BRAND_COLORS["accent"]
+
+    bar_colors = [_bar_color(r) for _, r in spv.iterrows()]
 
     fig = go.Figure()
     fig.add_trace(
@@ -371,6 +381,18 @@ def spv_covenant_comparison_chart(df: pd.DataFrame) -> go.Figure:
         )
     )
 
+    # Headroom annotations for healthy SPVs
+    for _, row in spv.iterrows():
+        if not bool(row["covenant_delinquency_breach"]) and float(row["headroom"]) > 0:
+            fig.add_annotation(
+                x=row["spv_id"],
+                y=float(row["covenant_max_delinquency_pct"]) + 0.005,
+                text=f"↑ {float(row['headroom']):.2%} headroom",
+                showarrow=False,
+                font=dict(size=10, color=BRAND_COLORS["positive"]),
+                xshift=-28,          # shift left to sit above actual bar, not limit bar
+            )
+
     fig.update_layout(
         **_LAYOUT,
         title=dict(
@@ -380,7 +402,7 @@ def spv_covenant_comparison_chart(df: pd.DataFrame) -> go.Figure:
         barmode="group",
         yaxis=dict(tickformat=".1%", gridcolor="#f0f4f8", zeroline=False),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        height=340,
+        height=360,
     )
     return fig
 

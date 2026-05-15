@@ -91,12 +91,37 @@ def render() -> None:
         "reconciliation_status": "Status",
     })
 
-    # Format numbers for readability
-    for col in ["Warehouse", "Source System", "Delta"]:
+    # Recompute delta_pct with full Python-float precision.
+    # The dbt model stores delta_pct rounded to 4 decimal places, which makes
+    # a legitimate $0.57 delta on $929M appear as 0.0000% — indistinguishable
+    # from true zero. Recomputing here preserves the signal.
+    raw_delta  = pd.to_numeric(recon["delta"],        errors="coerce")
+    raw_source = pd.to_numeric(recon["source_value"], errors="coerce")
+
+    def _fmt_delta_pct(delta: float, source: float) -> str:
+        if source == 0 and delta == 0:
+            return "—"           # true zero / zero — can't compute %
+        if source == 0:
+            return "n/a"         # division undefined
+        pct = abs(delta / source) * 100
+        if pct == 0:
+            return "0.0000%"
+        if pct < 0.001:
+            return f"< 0.001%  (actual: {pct:.8f}%)"
+        return f"{pct:.4f}%"
+
+    display["Delta %"] = [
+        _fmt_delta_pct(d, s) for d, s in zip(raw_delta, raw_source)
+    ]
+
+    # Format other numeric columns for readability
+    for col in ["Warehouse", "Source System"]:
         if col in display.columns:
             display[col] = display[col].apply(lambda x: f"{float(x):,.2f}")
-    if "Delta %" in display.columns:
-        display["Delta %"] = display["Delta %"].apply(lambda x: f"{float(x):.4f}%")
+    if "Delta" in display.columns:
+        display["Delta"] = display["Delta"].apply(
+            lambda x: f"{float(x):+,.4f}" if float(x) != 0 else "0.00"
+        )
 
     # Drop the timestamp column from the table view
     display = display[[c for c in display.columns if c not in ("reconciled_at",)]]
