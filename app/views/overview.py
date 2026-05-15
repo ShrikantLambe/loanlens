@@ -81,36 +81,31 @@ def _spv_covenant_row(spv: pd.DataFrame) -> None:
         head_color   = "#fecaca" if breach else "#bbf7d0"
 
         with col:
-            st.markdown(
-                f"""<div style="border:1px solid #e2e8f0;border-radius:12px;
-                                padding:16px 18px;background:#fff;">
-                      <div style="display:flex;justify-content:space-between;
-                                  align-items:center;margin-bottom:4px;">
-                        <span style="font-size:17px;font-weight:800;
-                                     color:#1e293b;">{row['spv_id']}</span>
-                        <span style="font-size:11px;font-weight:700;
-                                     color:{status_color};">{status_label}</span>
-                      </div>
-                      <div style="font-size:11px;color:#94a3b8;margin-bottom:10px;">
-                        {row.get('facility_name','')}
-                      </div>
-                      <div style="display:flex;height:8px;border-radius:4px;
-                                  overflow:hidden;background:#f1f5f9;margin-bottom:6px;">
-                        <div style="width:{used_pct};background:{used_color};"></div>
-                        <div style="width:{head_pct};background:{head_color};"></div>
-                      </div>
-                      <div style="display:flex;justify-content:space-between;
-                                  font-size:11px;color:#64748b;margin-bottom:8px;">
-                        <span>Delinquency <strong style="color:#1e293b;">{delinq:.2%}</strong></span>
-                        <span>Limit <strong>{limit:.2%}</strong></span>
-                      </div>
-                      <div style="font-size:12px;color:#475569;">
-                        Headroom: <strong style="color:{status_color};">{headroom:.2%}</strong>
-                        &nbsp;·&nbsp; {loans:,} loans
-                        &nbsp;·&nbsp; Util: <strong>{util:.1%}</strong>
-                      </div>
-                    </div>""",
-                unsafe_allow_html=True,
+            st.html(
+                f"<div style='border:1px solid #e2e8f0;border-radius:12px;"
+                f"padding:16px 18px;background:#fff;font-family:Inter,sans-serif;'>"
+                f"<div style='display:flex;justify-content:space-between;"
+                f"align-items:center;margin-bottom:4px;'>"
+                f"<span style='font-size:17px;font-weight:800;color:#1e293b;'>{row['spv_id']}</span>"
+                f"<span style='font-size:11px;font-weight:700;color:{status_color};'>{status_label}</span>"
+                f"</div>"
+                f"<div style='font-size:11px;color:#94a3b8;margin-bottom:10px;'>{row.get('facility_name','')}</div>"
+                f"<div style='display:flex;height:8px;border-radius:4px;"
+                f"overflow:hidden;background:#f1f5f9;margin-bottom:6px;'>"
+                f"<div style='width:{used_pct};background:{used_color};'></div>"
+                f"<div style='width:{head_pct};background:{head_color};'></div>"
+                f"</div>"
+                f"<div style='display:flex;justify-content:space-between;"
+                f"font-size:11px;color:#64748b;margin-bottom:8px;'>"
+                f"<span>Delinquency <strong style='color:#1e293b;'>{delinq:.2%}</strong></span>"
+                f"<span>Limit <strong>{limit:.2%}</strong></span>"
+                f"</div>"
+                f"<div style='font-size:12px;color:#475569;'>"
+                f"Headroom: <strong style='color:{status_color};'>{headroom:.2%}</strong>"
+                f"&nbsp;·&nbsp; {loans:,} loans"
+                f"&nbsp;·&nbsp; Util: <strong>{util:.1%}</strong>"
+                f"</div>"
+                f"</div>"
             )
 
 

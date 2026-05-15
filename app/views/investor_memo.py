@@ -39,12 +39,11 @@ _CARD_BODY  = "font-size:15px; color:#1e293b; line-height:1.65;"
 
 
 def _card(title: str, body: str) -> None:
-    st.markdown(
+    st.html(
         f"<div style='{_CARD_CSS}'>"
         f"<div style='{_CARD_TITLE}'>{title}</div>"
         f"<div style='{_CARD_BODY}'>{body}</div>"
-        f"</div>",
-        unsafe_allow_html=True,
+        f"</div>"
     )
 
 
@@ -192,8 +191,8 @@ def render() -> None:
         for a in urgent:
             sev   = a.get("severity", "high")
             color = SEVERITY_COLOR.get(sev, "#ea580c")
-            st.markdown(
-                f"<div style='border-left:4px solid {color}; padding:10px 14px; "
+            st.html(
+    f"<div style='border-left:4px solid {color}; padding:10px 14px; "
                 f"background:#fff7ed; border-radius:0 8px 8px 0; margin-bottom:10px;'>"
                 f"<div style='font-weight:700; color:{color}; font-size:13px'>"
                 f"[{sev.upper()}] {a.get('anomaly_type','').replace('_',' ').title()}"
@@ -201,9 +200,8 @@ def render() -> None:
                 f"<div style='color:#1e293b; margin:4px 0'>{a.get('description','')}</div>"
                 f"<div style='color:#64748b; font-size:13px'>"
                 f"<em>Recommended action: {a.get('recommended_action','')}</em></div>"
-                f"</div>",
-                unsafe_allow_html=True,
-            )
+                f"</div>"
+)
         st.divider()
 
     if demo_mode:
@@ -216,15 +214,14 @@ def render() -> None:
     # --- Sentiment badge ---
     sentiment = memo.get("sentiment", "cautious")
     cfg = SENTIMENT_CONFIG.get(sentiment, SENTIMENT_CONFIG["cautious"])
-    st.markdown(
-        f"<div style='display:inline-block; background:{cfg['bg']}; border:2px solid {cfg['border']}; "
+    st.html(
+    f"<div style='display:inline-block; background:{cfg['bg']}; border:2px solid {cfg['border']}; "
         f"color:{cfg['text']}; padding:6px 18px; border-radius:6px; font-weight:800; font-size:15px; "
         f"letter-spacing:.04em; margin-bottom:4px'>"
         f"{cfg['icon']} {cfg['label']}"
         f"</div>"
-        f"<span style='color:#94a3b8; font-size:13px; margin-left:12px'>{memo.get('period','')}</span>",
-        unsafe_allow_html=True,
-    )
+        f"<span style='color:#94a3b8; font-size:13px; margin-left:12px'>{memo.get('period','')}</span>"
+)
 
     st.divider()
 
@@ -264,17 +261,16 @@ def render() -> None:
         for anomaly in anomalies:
             sev   = anomaly.get("severity", "low")
             color = SEVERITY_COLOR.get(sev, "#6b7280")
-            st.markdown(
-                f"<div style='border-left:4px solid {color}; padding:10px 14px; "
+            st.html(
+    f"<div style='border-left:4px solid {color}; padding:10px 14px; "
                 f"background:#f8fafc; border-radius:0 8px 8px 0; margin-bottom:10px;'>"
                 f"<div style='font-weight:700; color:{color}; font-size:13px'>"
                 f"[{sev.upper()}] {anomaly.get('anomaly_type','').replace('_',' ').title()}"
                 f" &mdash; {anomaly.get('affected_entity','')}</div>"
                 f"<div style='color:#1e293b; margin:4px 0'>{anomaly.get('description','')}</div>"
                 f"<div style='color:#64748b; font-size:13px'><em>Action: {anomaly.get('recommended_action','')}</em></div>"
-                f"</div>",
-                unsafe_allow_html=True,
-            )
+                f"</div>"
+)
 
     # --- SPV covenant table ---
     covenant_rows = memo.get("covenant_status", [])

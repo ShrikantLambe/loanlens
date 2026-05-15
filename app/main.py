@@ -303,59 +303,42 @@ if "page" not in st.session_state:
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     # Brand
-    st.markdown(
-        """
-        <div style="padding: 8px 4px 20px;">
-            <div style="font-size:22px; font-weight:800; color:#f1f5f9;
-                        letter-spacing:-.03em; line-height:1;">
-                📊 LoanLens
-            </div>
-            <div style="font-size:11px; color:#475569; font-weight:500;
-                        letter-spacing:.06em; text-transform:uppercase;
-                        margin-top:5px;">
-                Portfolio Intelligence
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    st.html(
+        "<div style='padding:8px 4px 20px;font-family:Inter,sans-serif;'>"
+        "<div style='font-size:22px;font-weight:800;color:#f1f5f9;"
+        "letter-spacing:-.03em;line-height:1;'>📊 LoanLens</div>"
+        "<div style='font-size:11px;color:#475569;font-weight:500;"
+        "letter-spacing:.06em;text-transform:uppercase;margin-top:5px;'>"
+        "Portfolio Intelligence</div>"
+        "</div>"
     )
-
-    st.markdown("<hr/>", unsafe_allow_html=True)
+    st.divider()
 
     # Navigation — active item rendered as a styled div (no split tags);
     # inactive items are st.buttons styled via global CSS.
     current = st.session_state["page"]
     for key, icon, label in _PAGES:
         if current == key:
-            st.markdown(
-                f"""<div style="background:rgba(37,99,235,.18);
-                                border-left:3px solid #3b82f6;
-                                padding:9px 14px 9px 11px;
-                                border-radius:8px;
-                                color:#93c5fd;
-                                font-size:13.5px;
-                                font-weight:600;
-                                margin:1px 0;
-                                cursor:default;
-                                letter-spacing:.01em;">
-                      {icon}&nbsp;&nbsp;{label}
-                    </div>""",
-                unsafe_allow_html=True,
+            st.html(
+                f"<div style='background:rgba(37,99,235,.18);border-left:3px solid #3b82f6;"
+                f"padding:9px 14px 9px 11px;border-radius:8px;color:#93c5fd;"
+                f"font-size:13.5px;font-weight:600;margin:1px 0;cursor:default;"
+                f"letter-spacing:.01em;font-family:Inter,sans-serif;'>"
+                f"{icon}&nbsp;&nbsp;{label}</div>"
             )
         else:
             if st.button(f"{icon}  {label}", key=f"nav_{key}", use_container_width=True):
                 st.session_state["page"] = key
                 st.rerun()
 
-    # Footer — normal flow element; no position:fixed (that escapes the sidebar container)
-    st.markdown("<hr/>", unsafe_allow_html=True)
-    st.markdown(
-        """<div style="font-size:11px;color:#334155;font-weight:500;
-                       line-height:1.8;padding:4px 0 8px;">
-             10,000 loans &nbsp;·&nbsp; 180K events<br/>
-             3 SPVs &nbsp;·&nbsp; dbt + DuckDB + Claude
-           </div>""",
-        unsafe_allow_html=True,
+    # Footer
+    st.divider()
+    st.html(
+        "<div style='font-size:11px;color:#334155;font-weight:500;"
+        "line-height:1.8;padding:4px 0 8px;font-family:Inter,sans-serif;'>"
+        "10,000 loans &nbsp;·&nbsp; 180K events<br/>"
+        "3 SPVs &nbsp;·&nbsp; dbt + DuckDB + Claude"
+        "</div>"
     )
 
 # ── Route ─────────────────────────────────────────────────────────────────────

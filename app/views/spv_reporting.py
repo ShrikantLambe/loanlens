@@ -70,35 +70,29 @@ def _detail_card(row: pd.Series) -> None:
         + "</div>"
     )
 
-    st.markdown(
-        f"""<div style="border:2px solid {border_c};border-radius:14px;
-                        padding:20px 22px;background:#fff;">
-              <div style="display:flex;justify-content:space-between;
-                          align-items:flex-start;margin-bottom:4px;">
-                <div style="font-size:20px;font-weight:800;color:#1e293b;">{row['spv_id']}</div>
-                <span style="font-size:11px;font-weight:700;color:{status_c};
-                             margin-top:4px;">{status_lbl}</span>
-              </div>
-              <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;">
-                {row.get('facility_name','')}
-              </div>
-              <div style="font-size:10px;font-weight:600;color:#64748b;
-                          text-transform:uppercase;letter-spacing:.07em;
-                          margin-bottom:5px;">Delinquency Covenant</div>
-              <div style="display:flex;height:8px;border-radius:4px;
-                          overflow:hidden;background:#f1f5f9;margin-bottom:5px;">
-                <div style="width:{used_pct:.1f}%;background:{bar_used};"></div>
-                <div style="width:{head_pct:.1f}%;background:{bar_head};"></div>
-              </div>
-              <div style="display:flex;justify-content:space-between;
-                          font-size:11px;color:#64748b;margin-bottom:0;">
-                <span>Actual <strong style="color:{val_color}">{delinq:.2%}</strong></span>
-                <span>Headroom <strong style="color:{status_c}">{headroom:.2%}</strong></span>
-                <span>Limit <strong>{limit:.2%}</strong></span>
-              </div>
-              {metrics_html}
-            </div>""",
-        unsafe_allow_html=True,
+    st.html(
+        f"<div style='border:2px solid {border_c};border-radius:14px;"
+        f"padding:20px 22px;background:#fff;font-family:Inter,sans-serif;'>"
+        f"<div style='display:flex;justify-content:space-between;"
+        f"align-items:flex-start;margin-bottom:4px;'>"
+        f"<div style='font-size:20px;font-weight:800;color:#1e293b;'>{row['spv_id']}</div>"
+        f"<span style='font-size:11px;font-weight:700;color:{status_c};margin-top:4px;'>{status_lbl}</span>"
+        f"</div>"
+        f"<div style='font-size:12px;color:#94a3b8;margin-bottom:14px;'>{row.get('facility_name','')}</div>"
+        f"<div style='font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;"
+        f"letter-spacing:.07em;margin-bottom:5px;'>Delinquency Covenant</div>"
+        f"<div style='display:flex;height:8px;border-radius:4px;"
+        f"overflow:hidden;background:#f1f5f9;margin-bottom:5px;'>"
+        f"<div style='width:{used_pct:.1f}%;background:{bar_used};'></div>"
+        f"<div style='width:{head_pct:.1f}%;background:{bar_head};'></div>"
+        f"</div>"
+        f"<div style='display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:0;'>"
+        f"<span>Actual <strong style='color:{val_color}'>{delinq:.2%}</strong></span>"
+        f"<span>Headroom <strong style='color:{status_c}'>{headroom:.2%}</strong></span>"
+        f"<span>Limit <strong>{limit:.2%}</strong></span>"
+        f"</div>"
+        f"{metrics_html}"
+        f"</div>"
     )
 
 

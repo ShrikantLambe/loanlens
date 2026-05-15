@@ -53,26 +53,20 @@ def render() -> None:
 
     # 1. LARGE STATUS HEADLINE
     if all_pass:
-        st.markdown(
-            "<div style='text-align:center; padding:28px 0 20px;'>"
-            "<div style='font-size:48px;'>✅</div>"
-            "<div style='font-size:22px; font-weight:800; color:#15803d;"
-            "margin-top:8px'>ALL METRICS RECONCILED</div>"
-            "<div style='font-size:14px; color:#64748b; margin-top:4px'>"
-            f"Warehouse matches source system across all {len(recon)} checks</div>"
-            "</div>",
-            unsafe_allow_html=True,
+        st.html(
+            f"<div style='text-align:center;padding:28px 0 20px;font-family:Inter,sans-serif;'>"
+            f"<div style='font-size:48px;'>✅</div>"
+            f"<div style='font-size:22px;font-weight:800;color:#15803d;margin-top:8px;'>ALL METRICS RECONCILED</div>"
+            f"<div style='font-size:14px;color:#64748b;margin-top:4px;'>Warehouse matches source system across all {len(recon)} checks</div>"
+            f"</div>"
         )
     else:
-        st.markdown(
-            "<div style='text-align:center; padding:28px 0 20px;'>"
-            "<div style='font-size:48px;'>❌</div>"
-            "<div style='font-size:22px; font-weight:800; color:#b91c1c;"
-            "margin-top:8px'>RECONCILIATION FAILURE</div>"
-            "<div style='font-size:14px; color:#64748b; margin-top:4px'>"
-            f"{fail_count} of {len(recon)} metrics exceed the 0.1% tolerance threshold</div>"
-            "</div>",
-            unsafe_allow_html=True,
+        st.html(
+            f"<div style='text-align:center;padding:28px 0 20px;font-family:Inter,sans-serif;'>"
+            f"<div style='font-size:48px;'>❌</div>"
+            f"<div style='font-size:22px;font-weight:800;color:#b91c1c;margin-top:8px;'>RECONCILIATION FAILURE</div>"
+            f"<div style='font-size:14px;color:#64748b;margin-top:4px;'>{fail_count} of {len(recon)} metrics exceed the 0.1% tolerance threshold</div>"
+            f"</div>"
         )
 
     if "reconciled_at" in recon.columns:
