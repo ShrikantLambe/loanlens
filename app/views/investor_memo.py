@@ -176,10 +176,31 @@ def render() -> None:
         st.info("Click **Generate AI Commentary** to produce the investor memo.")
         return
 
-    memo      = st.session_state["memo"]
+    memo       = st.session_state["memo"]
     commentary = st.session_state["commentary"]
     anomalies  = st.session_state["anomalies"]
     demo_mode  = st.session_state.get("demo_mode", False)
+
+    # --- CRITICAL / HIGH anomalies surfaced BEFORE narrative ---
+    urgent = [a for a in anomalies if a.get("severity") in ("critical", "high")]
+    if urgent:
+        st.subheader("⚠ Active Alerts")
+        for a in urgent:
+            sev   = a.get("severity", "high")
+            color = SEVERITY_COLOR.get(sev, "#ea580c")
+            st.markdown(
+                f"<div style='border-left:4px solid {color}; padding:10px 14px; "
+                f"background:#fff7ed; border-radius:0 8px 8px 0; margin-bottom:10px;'>"
+                f"<div style='font-weight:700; color:{color}; font-size:13px'>"
+                f"[{sev.upper()}] {a.get('anomaly_type','').replace('_',' ').title()}"
+                f" — {a.get('affected_entity','')}</div>"
+                f"<div style='color:#1e293b; margin:4px 0'>{a.get('description','')}</div>"
+                f"<div style='color:#64748b; font-size:13px'>"
+                f"<em>Recommended action: {a.get('recommended_action','')}</em></div>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+        st.divider()
 
     if demo_mode:
         st.warning(

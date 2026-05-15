@@ -1,29 +1,95 @@
 """
-spv_reporting.py — SPV-level portfolio breakdown and covenant monitoring.
+spv_reporting.py — SPV facility monitoring and covenant compliance.
 
-Shows: three SPV columns with facility metrics, utilization bars,
-delinquency vs. covenant, and a breach warning banner.
+Story told top-to-bottom:
+  1. Breach banner          — immediate alert if any covenant is broken
+  2. Comparison chart       — all SPVs side-by-side (delinquency vs limit)
+  3. SPV detail cards       — per-facility deep-dive with headroom context
+  4. Covenant cheat sheet   — what each metric means and why it matters
 """
 
 import pandas as pd
 import streamlit as st
 
 from app.utils import snowflake_conn as db
-from app.utils.chart_helpers import spv_utilization_bar, BRAND_COLORS
+from app.utils.chart_helpers import spv_covenant_comparison_chart, BRAND_COLORS
 
 
 @st.cache_data(ttl=300)
 def _load_data() -> pd.DataFrame:
-    """Load SPV allocation data."""
     return db.table("fct_spv_allocation")
+
+
+def _detail_card(row: pd.Series) -> None:
+    """Per-SPV card with all key metrics and visual headroom indicator."""
+    breach   = bool(row.get("covenant_delinquency_breach", False))
+    delinq   = float(row.get("delinquency_rate",             0))
+    limit    = float(row.get("covenant_max_delinquency_pct", 0.08))
+    headroom = max(limit - delinq, 0)
+    util     = float(row.get("facility_utilization",         0))
+    principal= float(row.get("total_principal",              0))
+    fac_lim  = float(row.get("facility_limit",               0))
+    default  = float(row.get("default_rate",                 0))
+    uw_score = float(row.get("avg_underwriting_score",       0))
+    loans    = int(row.get("loan_count",                     0))
+    collected= float(row.get("total_collected",              0))
+    yield_   = (collected / principal) if principal else 0
+
+    border_c = BRAND_COLORS["danger"] if breach else "#e2e8f0"
+    head_c   = BRAND_COLORS["danger"] if breach else BRAND_COLORS["positive"]
+
+    # Headroom bar: red consumed portion + green headroom portion
+    used_pct = min(delinq / limit, 1.0) * 100
+    head_pct = min(headroom / limit, 1.0) * 100
+
+    st.markdown(
+        f"""
+        <div style="border:2px solid {border_c}; border-radius:12px;
+                    padding:20px 22px; background:#fff; height:100%;">
+          <div style="font-size:20px; font-weight:800; color:#1e293b;
+                      margin-bottom:2px">{row['spv_id']}</div>
+          <div style="font-size:12px; color:#64748b;
+                      margin-bottom:14px">{row.get('facility_name','')}</div>
+
+          <!-- Covenant headroom bar -->
+          <div style="font-size:11px; color:#64748b; margin-bottom:4px; font-weight:600">
+            DELINQUENCY COVENANT
+          </div>
+          <div style="display:flex; height:10px; border-radius:5px; overflow:hidden;
+                      background:#f1f5f9; margin-bottom:4px;">
+            <div style="width:{used_pct:.1f}%; background:{'#fca5a5' if breach else '#93c5fd'};"></div>
+            <div style="width:{head_pct:.1f}%; background:{'#fecaca' if breach else '#bbf7d0'};"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between;
+                      font-size:11px; color:#64748b; margin-bottom:14px;">
+            <span>Actual: <strong style="color:{'#dc2626' if breach else '#1e293b'}">{delinq:.2%}</strong></span>
+            <span>Headroom: <strong style="color:{head_c}">{headroom:.2%}</strong></span>
+            <span>Limit: <strong>{limit:.2%}</strong></span>
+          </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.metric("Loan Count",       f"{loans:,}")
+        st.metric("Total Principal",  f"${principal:,.0f}")
+        st.metric("Default Rate",     f"{default:.2%}")
+    with c2:
+        st.metric("Facility Limit",   f"${fac_lim:,.0f}")
+        st.metric("Utilization",      f"{util:.1%}")
+        st.metric("Avg UW Score",     f"{uw_score:.1f} / 100")
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render() -> None:
     """Render the SPV Reporting page."""
     st.title("SPV Reporting")
     st.caption(
-        "Per-SPV portfolio breakdown, facility utilization, and covenant monitoring. "
-        "Covenant breach triggers a lender's right to pull funding."
+        "Each Special Purpose Vehicle (SPV) is a ring-fenced legal entity holding loans "
+        "funded by a specific lending facility. Breaching a facility's covenant means the "
+        "lender can stop advancing new capital — which directly limits origination capacity."
     )
 
     try:
@@ -36,81 +102,64 @@ def render() -> None:
         st.info("No SPV data available. Run `make dev` first.")
         return
 
-    # Breach warning banner
+    # 1. BREACH BANNER
     breaches = spv[spv["covenant_delinquency_breach"].astype(bool)]
     if not breaches.empty:
-        breach_list = ", ".join(breaches["spv_id"].tolist())
+        names = ", ".join(breaches["spv_id"].tolist())
         st.error(
-            f"⚠️ COVENANT BREACH DETECTED on {breach_list}. "
-            "Delinquency rate exceeds facility threshold. Immediate review required."
+            f"⚠ **COVENANT BREACH on {names}** — delinquency rate exceeds facility threshold. "
+            "Lender has contractual right to suspend funding. Escalate to treasury immediately.",
         )
     else:
-        st.success("✅ All SPV covenants are within limits.")
+        spv["headroom"] = spv["covenant_max_delinquency_pct"] - spv["delinquency_rate"]
+        tightest        = spv.loc[spv["headroom"].idxmin()]
+        st.success(
+            f"All {len(spv)} facilities within covenant limits. "
+            f"Tightest headroom: **{tightest['spv_id']}** "
+            f"({float(tightest['headroom']):.2%} before breach)."
+        )
 
     st.divider()
 
-    # Three-column SPV layout
+    # 2. COMPARISON CHART — all SPVs in one view
+    st.subheader("Delinquency Rate vs. Covenant Limit")
+    st.caption(
+        "Bars show actual delinquency (blue = OK, red = breach). "
+        "Grey bars show the covenant ceiling. The gap is your operating headroom."
+    )
+    st.plotly_chart(spv_covenant_comparison_chart(spv), use_container_width=True)
+
+    st.divider()
+
+    # 3. DETAIL CARDS
+    st.subheader("Facility Detail")
     cols = st.columns(len(spv))
     for col, (_, row) in zip(cols, spv.sort_values("spv_id").iterrows()):
         with col:
-            breach = bool(row.get("covenant_delinquency_breach", False))
-            header_color = BRAND_COLORS["danger"] if breach else BRAND_COLORS["primary"]
-
-            st.markdown(
-                f"<h3 style='color:{header_color}'>{row['spv_id']}</h3>",
-                unsafe_allow_html=True,
-            )
-            st.caption(row.get("facility_name", ""))
-
-            st.metric("Loan Count", f"{int(row.get('loan_count', 0)):,}")
-            st.metric(
-                "Total Principal",
-                f"${float(row.get('total_principal', 0)):,.0f}",
-            )
-            st.metric(
-                "Facility Limit",
-                f"${float(row.get('facility_limit', 0)):,.0f}",
-            )
-
-            # Utilization bar
-            util = float(row.get("facility_utilization", 0))
-            st.plotly_chart(
-                spv_utilization_bar(
-                    row["spv_id"],
-                    util,
-                    float(row.get("facility_limit", 0)),
-                ),
-                use_container_width=True,
-            )
-
-            delinq = float(row.get("delinquency_rate", 0))
-            covenant = float(row.get("covenant_max_delinquency_pct", 0))
-            headroom = covenant - delinq
-            st.metric(
-                "Delinquency Rate",
-                f"{delinq:.2%}",
-                delta=f"{'−' if headroom < 0 else '+'}{abs(headroom):.2%} vs {covenant:.2%} limit",
-                delta_color="inverse" if breach else "normal",
-            )
-
-            st.metric(
-                "Default Rate",
-                f"{float(row.get('default_rate', 0)):.2%}",
-            )
-            st.metric(
-                "Avg UW Score",
-                f"{float(row.get('avg_underwriting_score', 0)):.1f}",
-            )
+            _detail_card(row)
 
     st.divider()
 
-    # Full data table
-    st.subheader("SPV Detail Table")
-    display_cols = [
-        "spv_id", "facility_name", "loan_count", "total_principal",
-        "facility_limit", "facility_utilization", "delinquency_rate",
-        "covenant_max_delinquency_pct", "default_rate",
-        "avg_underwriting_score", "covenant_delinquency_breach",
-    ]
-    available = [c for c in display_cols if c in spv.columns]
-    st.dataframe(spv[available], use_container_width=True, hide_index=True)
+    # 4. COVENANT CHEAT SHEET
+    with st.expander("What do these covenants mean?"):
+        st.markdown(
+            """
+**Delinquency Covenant** — the maximum percentage of outstanding principal that
+can be 30+ days past due. If exceeded, the lending facility can:
+- Pause new loan advances (stops origination)
+- Demand early repayment of outstanding facility draws
+- Appoint a backup servicer
+
+**Facility Utilization** — how much of the approved credit line is drawn.
+High utilization (> 85%) limits your ability to fund new loans without
+raising additional facility capacity.
+
+**Underwriting Score** — internal 1–100 score assigned at origination.
+A declining score on newer cohorts signals looser underwriting standards,
+which typically leads to higher delinquency with a 3–6 month lag.
+
+**Why this matters**: These aren't just reporting metrics — they are
+contractual tripwires. A Finance Data Lead who monitors these daily
+prevents a breach surprise that could halt the entire lending operation.
+            """
+        )
