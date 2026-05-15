@@ -69,9 +69,42 @@ def render() -> None:
             f"</div>"
         )
 
-    if "reconciled_at" in recon.columns:
-        ts = str(recon["reconciled_at"].iloc[0])[:19]
-        st.caption(f"Last reconciled: {ts} UTC")
+    # Freshness badge + simulated rerun
+    recon_ts = str(recon.get("reconciled_at", pd.Series([None])).iloc[0])[:19]
+    # Use session_state override if user pressed "Rerun" in this session
+    if "recon_rerun_time" in st.session_state:
+        recon_ts = st.session_state["recon_rerun_time"]
+
+    try:
+        recon_dt    = pd.to_datetime(recon_ts)
+        hours_since = (pd.Timestamp.now() - recon_dt).total_seconds() / 3600
+        if hours_since < 24:
+            badge_txt   = f"🟢 Fresh · {int(hours_since)}h ago"
+            badge_bg, badge_fg = "#f0fdf4", "#15803d"
+        elif hours_since < 168:
+            badge_txt   = f"🟡 Stale · {int(hours_since/24)}d ago — Rerun recommended"
+            badge_bg, badge_fg = "#fef9c3", "#b45309"
+        else:
+            badge_txt   = f"🔴 Stale · {int(hours_since/24)}d ago — Rerun required"
+            badge_bg, badge_fg = "#fee2e2", "#b91c1c"
+    except Exception:
+        badge_txt   = f"Last reconciled: {recon_ts}"
+        badge_bg, badge_fg = "#f1f5f9", "#64748b"
+
+    col_ts, col_btn = st.columns([4, 1])
+    with col_ts:
+        st.html(
+            f"<span style='background:{badge_bg};color:{badge_fg};"
+            f"padding:4px 12px;border-radius:20px;font-size:12px;"
+            f"font-weight:600;font-family:Inter,sans-serif;'>{badge_txt}</span>"
+        )
+    with col_btn:
+        if st.button("↻ Rerun", use_container_width=True, help="Simulate a pipeline re-run"):
+            st.session_state["recon_rerun_time"] = (
+                pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+            )
+            _load_data.clear()
+            st.rerun()
 
     st.divider()
 

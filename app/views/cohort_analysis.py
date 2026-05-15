@@ -47,20 +47,34 @@ def _insight_callout(summary: pd.DataFrame) -> None:
             worst_label,
             f"{worst_rate:.2%} default rate",
             delta_color="inverse",
-            help="Cohort with highest peak cumulative default rate.",
+            help=(
+                "The origination vintage with the highest peak cumulative default rate. "
+                "Source: fct_cohort_performance · Metric: MAX(cumulative_default_rate). "
+                "Earlier vintages typically have higher rates because they've had more time "
+                "to season — defaults emerge 6–18 months after origination."
+            ),
         )
     with c2:
         st.metric(
             "Best Cohort",
             best_label,
             f"{best_rate:.2%} default rate",
-            help="Cohort with lowest peak cumulative default rate.",
+            help=(
+                "The origination vintage with the lowest peak cumulative default rate. "
+                "Recent 2024 cohorts often rank best because they haven't yet had enough "
+                "time to accumulate defaults — a J-curve effect, not better underwriting. "
+                "Source: fct_cohort_performance."
+            ),
         )
     with c3:
         st.metric(
             "Portfolio Average",
             f"{avg:.2%}",
-            help="Mean peak default rate across all cohorts.",
+            help=(
+                "Unweighted mean of each cohort's peak cumulative default rate. "
+                "Weighted by cohort principal would give a higher number for portfolios "
+                "with large late-vintage originations. Source: fct_cohort_performance."
+            ),
         )
 
 

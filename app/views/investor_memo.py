@@ -108,18 +108,38 @@ def render() -> None:
 
     st.divider()
 
-    # --- Generate button ---
-    col_btn, col_pdf = st.columns([2, 1])
-    with col_btn:
-        generate = st.button("Generate AI Commentary", type="primary", use_container_width=True)
-    with col_pdf:
-        pdf_ready = "memo" in st.session_state
-        pdf_btn = st.button(
-            "Download PDF",
-            disabled=not pdf_ready,
-            use_container_width=True,
-            help="Generate commentary first, then download as PDF.",
+    # --- Buttons: layout differs by state ---
+    has_memo = "memo" in st.session_state
+    if not has_memo:
+        # State 1: prominent single CTA with description
+        st.html(
+            "<div style='background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;"
+            "padding:20px 24px;margin-bottom:16px;font-family:Inter,sans-serif;'>"
+            "<div style='font-size:15px;font-weight:700;color:#1e40af;margin-bottom:6px;'>"
+            "Generate AI-powered investor commentary</div>"
+            "<div style='font-size:13px;color:#3b82f6;line-height:1.5;'>"
+            "Claude will read the live portfolio data and write structured output: "
+            "executive summary, risk flags, cohort observations, and recommended actions — "
+            "ready to export as a PDF memo."
+            "</div></div>"
         )
+        generate = st.button(
+            "Generate AI Commentary →", type="primary", use_container_width=True
+        )
+        pdf_btn = False
+    else:
+        # State 2: Regenerate (secondary) + Download PDF (primary)
+        col_regen, col_pdf = st.columns([1, 1])
+        with col_regen:
+            generate = st.button(
+                "↻ Regenerate", use_container_width=True,
+                help="Call Claude again to refresh the commentary.",
+            )
+        with col_pdf:
+            pdf_btn = st.button(
+                "⬇ Download PDF", type="primary", use_container_width=True,
+                help="Export this memo as a PDF report.",
+            )
 
     if generate:
         with st.spinner("Calling Claude… (~5–10 seconds)"):
@@ -176,18 +196,21 @@ def render() -> None:
                 st.error(f"PDF generation failed: {e}")
 
     if "memo" not in st.session_state:
-        st.info("Click **Generate AI Commentary** to produce the investor memo.")
-        return
+        return   # State 1 already rendered above — nothing more to show
 
     memo       = st.session_state["memo"]
     commentary = st.session_state["commentary"]
     anomalies  = st.session_state["anomalies"]
     demo_mode  = st.session_state.get("demo_mode", False)
 
-    # --- CRITICAL / HIGH anomalies surfaced BEFORE narrative ---
+    # --- CRITICAL / HIGH anomalies — clearly marked as point-in-time snapshot ---
+    gen_ts = str(memo.get("generated_at", ""))[:19]
     urgent = [a for a in anomalies if a.get("severity") in ("critical", "high")]
     if urgent:
-        section_header("⚠ Active Alerts")
+        section_header(
+            "⚠ Active Alerts",
+            f"Snapshot at memo generation · {gen_ts} — see Portfolio Overview for real-time status",
+        )
         for a in urgent:
             sev   = a.get("severity", "high")
             color = SEVERITY_COLOR.get(sev, "#ea580c")
