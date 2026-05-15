@@ -21,8 +21,24 @@ def _load_data() -> pd.DataFrame:
     return db.table("fct_spv_allocation")
 
 
+def _metric_row(label: str, value: str) -> str:
+    """Returns an HTML snippet for one metric in the SPV detail card."""
+    return (
+        f"<div style='margin-bottom:12px;'>"
+        f"<div style='font-size:10px;font-weight:600;color:#94a3b8;"
+        f"text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;'>{label}</div>"
+        f"<div style='font-size:17px;font-weight:700;color:#0f172a;"
+        f"font-variant-numeric:tabular-nums;letter-spacing:-.02em;'>{value}</div>"
+        f"</div>"
+    )
+
+
 def _detail_card(row: pd.Series) -> None:
-    """Per-SPV card with all key metrics and visual headroom indicator."""
+    """
+    Per-SPV card rendered as a single self-contained HTML block.
+    No split tags, no st.metric inside HTML — avoids the Streamlit
+    'each st.markdown is its own container' limitation.
+    """
     breach   = bool(row.get("covenant_delinquency_breach", False))
     delinq   = float(row.get("delinquency_rate",             0))
     limit    = float(row.get("covenant_max_delinquency_pct", 0.08))
@@ -33,55 +49,57 @@ def _detail_card(row: pd.Series) -> None:
     default  = float(row.get("default_rate",                 0))
     uw_score = float(row.get("avg_underwriting_score",       0))
     loans    = int(row.get("loan_count",                     0))
-    collected= float(row.get("total_collected",              0))
-    yield_   = (collected / principal) if principal else 0
 
-    border_c = BRAND_COLORS["danger"] if breach else "#e2e8f0"
-    head_c   = BRAND_COLORS["danger"] if breach else BRAND_COLORS["positive"]
+    border_c  = BRAND_COLORS["danger"] if breach else "#e2e8f0"
+    status_c  = BRAND_COLORS["danger"] if breach else BRAND_COLORS["positive"]
+    status_lbl= "⚠ BREACH" if breach else "✓ OK"
+    used_pct  = min(delinq / limit, 1.0) * 100
+    head_pct  = min(headroom / limit, 1.0) * 100
+    bar_used  = "#fca5a5" if breach else "#93c5fd"
+    bar_head  = "#fecaca" if breach else "#bbf7d0"
+    val_color = "#dc2626" if breach else "#0f172a"
 
-    # Headroom bar: red consumed portion + green headroom portion
-    used_pct = min(delinq / limit, 1.0) * 100
-    head_pct = min(headroom / limit, 1.0) * 100
-
-    st.markdown(
-        f"""
-        <div style="border:2px solid {border_c}; border-radius:12px;
-                    padding:20px 22px; background:#fff; height:100%;">
-          <div style="font-size:20px; font-weight:800; color:#1e293b;
-                      margin-bottom:2px">{row['spv_id']}</div>
-          <div style="font-size:12px; color:#64748b;
-                      margin-bottom:14px">{row.get('facility_name','')}</div>
-
-          <!-- Covenant headroom bar -->
-          <div style="font-size:11px; color:#64748b; margin-bottom:4px; font-weight:600">
-            DELINQUENCY COVENANT
-          </div>
-          <div style="display:flex; height:10px; border-radius:5px; overflow:hidden;
-                      background:#f1f5f9; margin-bottom:4px;">
-            <div style="width:{used_pct:.1f}%; background:{'#fca5a5' if breach else '#93c5fd'};"></div>
-            <div style="width:{head_pct:.1f}%; background:{'#fecaca' if breach else '#bbf7d0'};"></div>
-          </div>
-          <div style="display:flex; justify-content:space-between;
-                      font-size:11px; color:#64748b; margin-bottom:14px;">
-            <span>Actual: <strong style="color:{'#dc2626' if breach else '#1e293b'}">{delinq:.2%}</strong></span>
-            <span>Headroom: <strong style="color:{head_c}">{headroom:.2%}</strong></span>
-            <span>Limit: <strong>{limit:.2%}</strong></span>
-          </div>
-        """,
-        unsafe_allow_html=True,
+    metrics_html = (
+        f"<div style='display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:16px;'>"
+        + _metric_row("Loan Count",      f"{loans:,}")
+        + _metric_row("Total Principal", f"${principal:,.0f}")
+        + _metric_row("Facility Limit",  f"${fac_lim:,.0f}")
+        + _metric_row("Utilization",     f"{util:.1%}")
+        + _metric_row("Default Rate",    f"{default:.2%}")
+        + _metric_row("Avg UW Score",    f"{uw_score:.1f} / 100")
+        + "</div>"
     )
 
-    c1, c2 = st.columns(2)
-    with c1:
-        st.metric("Loan Count",       f"{loans:,}")
-        st.metric("Total Principal",  f"${principal:,.0f}")
-        st.metric("Default Rate",     f"{default:.2%}")
-    with c2:
-        st.metric("Facility Limit",   f"${fac_lim:,.0f}")
-        st.metric("Utilization",      f"{util:.1%}")
-        st.metric("Avg UW Score",     f"{uw_score:.1f} / 100")
-
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"""<div style="border:2px solid {border_c};border-radius:14px;
+                        padding:20px 22px;background:#fff;">
+              <div style="display:flex;justify-content:space-between;
+                          align-items:flex-start;margin-bottom:4px;">
+                <div style="font-size:20px;font-weight:800;color:#1e293b;">{row['spv_id']}</div>
+                <span style="font-size:11px;font-weight:700;color:{status_c};
+                             margin-top:4px;">{status_lbl}</span>
+              </div>
+              <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;">
+                {row.get('facility_name','')}
+              </div>
+              <div style="font-size:10px;font-weight:600;color:#64748b;
+                          text-transform:uppercase;letter-spacing:.07em;
+                          margin-bottom:5px;">Delinquency Covenant</div>
+              <div style="display:flex;height:8px;border-radius:4px;
+                          overflow:hidden;background:#f1f5f9;margin-bottom:5px;">
+                <div style="width:{used_pct:.1f}%;background:{bar_used};"></div>
+                <div style="width:{head_pct:.1f}%;background:{bar_head};"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;
+                          font-size:11px;color:#64748b;margin-bottom:0;">
+                <span>Actual <strong style="color:{val_color}">{delinq:.2%}</strong></span>
+                <span>Headroom <strong style="color:{status_c}">{headroom:.2%}</strong></span>
+                <span>Limit <strong>{limit:.2%}</strong></span>
+              </div>
+              {metrics_html}
+            </div>""",
+        unsafe_allow_html=True,
+    )
 
 
 def render() -> None:

@@ -315,18 +315,30 @@ with st.sidebar:
 
     st.markdown("<hr/>", unsafe_allow_html=True)
 
-    # Navigation — buttons styled as nav items via CSS; active item gets .nav-active wrapper
+    # Navigation — active item rendered as a styled div (no split tags);
+    # inactive items are st.buttons styled via global CSS.
     current = st.session_state["page"]
     for key, icon, label in _PAGES:
-        is_active = current == key
-        # Wrap active button in a div with the .nav-active class
-        if is_active:
-            st.markdown("<div class='nav-active'>", unsafe_allow_html=True)
-        if st.button(f"{icon}  {label}", key=f"nav_{key}", use_container_width=True):
-            st.session_state["page"] = key
-            st.rerun()
-        if is_active:
-            st.markdown("</div>", unsafe_allow_html=True)
+        if current == key:
+            st.markdown(
+                f"""<div style="background:rgba(37,99,235,.18);
+                                border-left:3px solid #3b82f6;
+                                padding:9px 14px 9px 11px;
+                                border-radius:8px;
+                                color:#93c5fd;
+                                font-size:13.5px;
+                                font-weight:600;
+                                margin:1px 0;
+                                cursor:default;
+                                letter-spacing:.01em;">
+                      {icon}&nbsp;&nbsp;{label}
+                    </div>""",
+                unsafe_allow_html=True,
+            )
+        else:
+            if st.button(f"{icon}  {label}", key=f"nav_{key}", use_container_width=True):
+                st.session_state["page"] = key
+                st.rerun()
 
     # Footer
     st.markdown(

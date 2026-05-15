@@ -203,17 +203,14 @@ def render() -> None:
     min_covenant = float(spv["covenant_max_delinquency_pct"].min()) if not spv.empty else None
     last_year    = daily[daily["date_day"] >= daily["date_day"].max() - pd.Timedelta(days=365)]
 
-    col_trend, col_orig = st.columns([3, 2])
-    with col_trend:
-        st.plotly_chart(
-            delinquency_trend_chart(last_year, covenant_limit=min_covenant),
-            use_container_width=True,
-        )
-    with col_orig:
-        st.plotly_chart(
-            origination_volume_chart(originations),
-            use_container_width=True,
-        )
+    st.plotly_chart(
+        delinquency_trend_chart(last_year, covenant_limit=min_covenant),
+        use_container_width=True,
+    )
+    st.plotly_chart(
+        origination_volume_chart(originations),
+        use_container_width=True,
+    )
 
     st.divider()
 
