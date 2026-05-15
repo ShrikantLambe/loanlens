@@ -62,67 +62,54 @@ def _status_banner(spv: pd.DataFrame, current_delinq: float) -> None:
 
 def _spv_covenant_row(spv: pd.DataFrame) -> None:
     """
-    Compact one-row SPV health display.
-    Shows headroom as a thin coloured progress bar — the gap between
-    actual delinquency and covenant limit is immediately readable.
+    Compact SPV health cards — one per facility.
+    Each card is a fully self-contained HTML block (no split tags, no HTML comments).
     """
-    st.subheader("SPV Covenant Headroom")
-    st.caption(
-        "Green bar = available headroom before covenant breach. "
-        "Red fill = delinquency already consumed."
-    )
-
     cols = st.columns(len(spv))
     for col, (_, row) in zip(cols, spv.sort_values("spv_id").iterrows()):
-        breach   = bool(row.get("covenant_delinquency_breach", False))
-        delinq   = float(row.get("delinquency_rate", 0))
-        limit    = float(row.get("covenant_max_delinquency_pct", 0.08))
-        headroom = max(limit - delinq, 0)
-        util     = float(row.get("facility_utilization", 0))
-        loans    = int(row.get("loan_count", 0))
+        breach       = bool(row.get("covenant_delinquency_breach", False))
+        delinq       = float(row.get("delinquency_rate", 0))
+        limit        = float(row.get("covenant_max_delinquency_pct", 0.08))
+        headroom     = max(limit - delinq, 0)
+        util         = float(row.get("facility_utilization", 0))
+        loans        = int(row.get("loan_count", 0))
+        status_color = BRAND_COLORS["danger"] if breach else BRAND_COLORS["positive"]
+        status_label = "⚠ BREACH" if breach else "✓ OK"
+        used_pct     = f"{min(delinq/limit,1)*100:.1f}%"
+        head_pct     = f"{min(headroom/limit,1)*100:.1f}%"
+        used_color   = BRAND_COLORS["danger"] if breach else "#93c5fd"
+        head_color   = "#fecaca" if breach else "#bbf7d0"
 
         with col:
-            status_color  = BRAND_COLORS["danger"]   if breach else BRAND_COLORS["positive"]
-            status_label  = "⚠ BREACH"               if breach else "✓ OK"
-            bar_used      = f"width:{min(delinq/limit,1)*100:.1f}%"
-            bar_head      = f"width:{min(headroom/limit,1)*100:.1f}%"
-            used_color    = BRAND_COLORS["danger"]   if breach else "#93c5fd"
-            head_color    = "#bbf7d0" if not breach else "#fecaca"
-
             st.markdown(
-                f"""
-                <div style="border:1px solid #e2e8f0; border-radius:10px;
-                            padding:16px 18px; background:#fff;">
-                  <div style="display:flex; justify-content:space-between;
-                              align-items:center; margin-bottom:6px;">
-                    <span style="font-size:17px; font-weight:800;
-                                 color:#1e293b">{row['spv_id']}</span>
-                    <span style="font-size:11px; font-weight:700;
-                                 color:{status_color}">{status_label}</span>
-                  </div>
-                  <div style="font-size:11px; color:#94a3b8;
-                              margin-bottom:10px">{row.get('facility_name','')}</div>
-
-                  <!-- stacked headroom bar -->
-                  <div style="display:flex; height:8px; border-radius:4px;
-                              overflow:hidden; background:#f1f5f9; margin-bottom:8px;">
-                    <div style="{bar_used}; background:{used_color};
-                                transition:width 0.3s;"></div>
-                    <div style="{bar_head}; background:{head_color};"></div>
-                  </div>
-                  <div style="display:flex; justify-content:space-between;
-                              font-size:11px; color:#64748b; margin-bottom:10px;">
-                    <span>Delinquency <strong style="color:#1e293b">{delinq:.2%}</strong></span>
-                    <span>Limit <strong>{limit:.2%}</strong></span>
-                  </div>
-
-                  <div style="font-size:12px; color:#475569;">
-                    Headroom: <strong style="color:{status_color}">{headroom:.2%}</strong>
-                    &nbsp;·&nbsp; {loans:,} loans
-                    &nbsp;·&nbsp; Utilization: <strong>{util:.1%}</strong>
-                  </div>
-                </div>
-                """,
+                f"""<div style="border:1px solid #e2e8f0;border-radius:12px;
+                                padding:16px 18px;background:#fff;">
+                      <div style="display:flex;justify-content:space-between;
+                                  align-items:center;margin-bottom:4px;">
+                        <span style="font-size:17px;font-weight:800;
+                                     color:#1e293b;">{row['spv_id']}</span>
+                        <span style="font-size:11px;font-weight:700;
+                                     color:{status_color};">{status_label}</span>
+                      </div>
+                      <div style="font-size:11px;color:#94a3b8;margin-bottom:10px;">
+                        {row.get('facility_name','')}
+                      </div>
+                      <div style="display:flex;height:8px;border-radius:4px;
+                                  overflow:hidden;background:#f1f5f9;margin-bottom:6px;">
+                        <div style="width:{used_pct};background:{used_color};"></div>
+                        <div style="width:{head_pct};background:{head_color};"></div>
+                      </div>
+                      <div style="display:flex;justify-content:space-between;
+                                  font-size:11px;color:#64748b;margin-bottom:8px;">
+                        <span>Delinquency <strong style="color:#1e293b;">{delinq:.2%}</strong></span>
+                        <span>Limit <strong>{limit:.2%}</strong></span>
+                      </div>
+                      <div style="font-size:12px;color:#475569;">
+                        Headroom: <strong style="color:{status_color};">{headroom:.2%}</strong>
+                        &nbsp;·&nbsp; {loans:,} loans
+                        &nbsp;·&nbsp; Util: <strong>{util:.1%}</strong>
+                      </div>
+                    </div>""",
                 unsafe_allow_html=True,
             )
 

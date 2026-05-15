@@ -138,6 +138,19 @@ st.markdown(
         margin: .75rem 0 !important;
     }
 
+    /* ── Sidebar element spacing: flush all containers to zero margin ── */
+    section[data-testid="stSidebar"] .element-container {
+        margin-bottom: 2px !important;
+        margin-top: 0 !important;
+    }
+    section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {
+        width: 100% !important;
+    }
+    section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"],
+    section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        gap: 2px !important;
+    }
+
     /* Nav buttons in sidebar */
     section[data-testid="stSidebar"] .stButton > button {
         background: transparent !important;
@@ -150,12 +163,14 @@ st.markdown(
         padding: 9px 14px !important;
         border-radius: 8px !important;
         height: auto !important;
-        min-height: 0 !important;
+        min-height: 36px !important;
         line-height: 1.4 !important;
         box-shadow: none !important;
         width: 100% !important;
         letter-spacing: .01em !important;
         transition: background .15s ease, color .15s ease !important;
+        display: flex !important;
+        align-items: center !important;
     }
     section[data-testid="stSidebar"] .stButton > button:hover {
         background: rgba(255,255,255,.07) !important;
@@ -166,14 +181,6 @@ st.markdown(
     section[data-testid="stSidebar"] .stButton > button:focus {
         outline: none !important;
         box-shadow: none !important;
-    }
-    /* Active nav item: set via .nav-active class on parent div */
-    .nav-active .stButton > button {
-        background: rgba(37,99,235,.18) !important;
-        color: #93c5fd !important;
-        font-weight: 600 !important;
-        border-left: 3px solid #3b82f6 !important;
-        padding-left: 11px !important;
     }
 
     /* ── 9. Primary button (outside sidebar) ── */
@@ -340,18 +347,14 @@ with st.sidebar:
                 st.session_state["page"] = key
                 st.rerun()
 
-    # Footer
+    # Footer — normal flow element; no position:fixed (that escapes the sidebar container)
+    st.markdown("<hr/>", unsafe_allow_html=True)
     st.markdown(
-        """
-        <div style="position:fixed; bottom:0; left:0; width:256px;
-                    padding:16px 20px; border-top:1px solid rgba(255,255,255,.06);
-                    background: linear-gradient(180deg, transparent, rgba(12,21,39,.95));">
-            <div style="font-size:11px; color:#334155; font-weight:500; line-height:1.8;">
-                10,000 loans · 180K events<br/>
-                3 SPVs · dbt + DuckDB + Claude<br/>
-            </div>
-        </div>
-        """,
+        """<div style="font-size:11px;color:#334155;font-weight:500;
+                       line-height:1.8;padding:4px 0 8px;">
+             10,000 loans &nbsp;·&nbsp; 180K events<br/>
+             3 SPVs &nbsp;·&nbsp; dbt + DuckDB + Claude
+           </div>""",
         unsafe_allow_html=True,
     )
 

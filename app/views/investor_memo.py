@@ -188,7 +188,7 @@ def render() -> None:
     # --- CRITICAL / HIGH anomalies surfaced BEFORE narrative ---
     urgent = [a for a in anomalies if a.get("severity") in ("critical", "high")]
     if urgent:
-        st.subheader("⚠ Active Alerts")
+        section_header("⚠ Active Alerts")
         for a in urgent:
             sev   = a.get("severity", "high")
             color = SEVERITY_COLOR.get(sev, "#ea580c")
