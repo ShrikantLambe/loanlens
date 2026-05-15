@@ -22,12 +22,13 @@ from app.utils.ui import page_header, section_header
 
 
 @st.cache_data(ttl=300)
-def _load_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    daily        = db.table("fct_portfolio_daily")
+def _load_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    weekly       = db.table("fct_delinquency_weekly")
     originations = db.table("fct_originations")
     spv          = db.table("fct_spv_allocation")
     recon        = db.table("rpt_reconciliation")
-    return daily, originations, spv, recon
+    summary      = db.table("rpt_portfolio_summary")
+    return weekly, originations, spv, recon, summary
 
 
 def _status_banner(spv: pd.DataFrame, current_delinq: float) -> None:
@@ -118,72 +119,70 @@ def render() -> None:
     )
 
     try:
-        daily, originations, spv, recon = _load_data()
+        weekly, originations, spv, recon, summary = _load_data()
     except Exception as e:
         st.error(f"Failed to load data: {e}")
         st.info("Run `make dev` to seed and transform data.")
         return
 
-    daily["date_day"] = pd.to_datetime(daily["date_day"])
-    daily = daily.sort_values("date_day")
-    latest = daily.iloc[-1]
-
-    prior_row = daily[
-        daily["date_day"] <= daily["date_day"].max() - pd.Timedelta(days=30)
-    ]
-    prior = prior_row.iloc[-1] if not prior_row.empty else None
+    weekly["week_date"] = pd.to_datetime(weekly["week_date"])
+    weekly = weekly.sort_values("week_date")
+    latest_week  = weekly.iloc[-1]
+    prior_week   = weekly[weekly["week_date"] <= weekly["week_date"].max() - pd.Timedelta(days=30)]
+    prior        = prior_week.iloc[-1] if not prior_week.empty else None
 
     def _delta(col: str) -> float | None:
-        return float(latest[col]) - float(prior[col]) if prior is not None else None
+        return float(latest_week[col]) - float(prior[col]) if prior is not None else None
 
-    # 1. STATUS BANNER — most important signal, always at the top
-    _status_banner(spv, float(latest["delinquency_rate"]))
+    # Summary row — single source of truth for KPI cards
+    row = summary.iloc[0] if not summary.empty else {}
+
+    # 1. STATUS BANNER
+    current_delinq = float(row.get("delinquency_rate_pct", 0)) / 100
+    _status_banner(spv, current_delinq)
     st.divider()
 
-    # 2. KPI ROW
+    # 2. KPI ROW — from rpt_portfolio_summary (authoritative single number per metric)
     c1, c2, c3, c4 = st.columns(4)
-    total_originated = float(spv["total_principal"].sum())
 
     with c1:
         st.metric(
             "Total Originated",
-            f"${total_originated:,.0f}",
-            help="Sum of funded principal across all SPVs.",
+            f"${float(row.get('total_originated', 0)):,.0f}",
+            help="Cumulative principal funded across all loans.",
         )
     with c2:
-        outstanding = float(latest["outstanding_principal"])
-        outstanding_delta = _delta("outstanding_principal")
         st.metric(
             "Outstanding Principal",
-            f"${outstanding:,.0f}",
-            delta=f"${outstanding_delta:+,.0f} vs 30d" if outstanding_delta else None,
+            f"${float(row.get('outstanding_principal', 0)):,.0f}",
+            help="Principal of loans not yet paid off.",
         )
     with c3:
-        delinq        = float(latest["delinquency_rate"])
-        delinq_delta  = _delta("delinquency_rate")
+        delinq_pct   = float(row.get("delinquency_rate_pct", 0))
+        delinq_delta = _delta("delinquency_rate")
         st.metric(
             "Delinquency Rate",
-            f"{delinq:.2%}",
-            delta=f"{delinq_delta:+.2%} vs 30d" if delinq_delta is not None else None,
+            f"{delinq_pct:.2f}%",
+            delta=f"{delinq_delta*100:+.2f}pp vs 30d" if delinq_delta is not None else None,
             delta_color="inverse",
-            help="% of outstanding principal that is 30+ days past due.",
+            help="% of outstanding principal 30+ DPD. Source: rpt_portfolio_summary.",
         )
     with c4:
-        default_rate  = float(latest["default_rate"])
+        default_pct  = float(row.get("default_rate_pct", 0))
         default_delta = _delta("default_rate")
         st.metric(
             "Default Rate",
-            f"{default_rate:.2%}",
-            delta=f"{default_delta:+.2%} vs 30d" if default_delta is not None else None,
+            f"{default_pct:.2f}%",
+            delta=f"{default_delta*100:+.2f}pp vs 30d" if default_delta is not None else None,
             delta_color="inverse",
-            help="% of outstanding principal classified as defaulted (90+ DPD).",
+            help="% of outstanding principal 90+ DPD (hard default). Source: rpt_portfolio_summary.",
         )
 
     st.divider()
 
-    # 3. CHARTS SIDE BY SIDE — saves vertical scroll; trend left, volume right
+    # 3. DELINQUENCY TREND — uses fct_delinquency_weekly (event-date based, not static status)
     min_covenant = float(spv["covenant_max_delinquency_pct"].min()) if not spv.empty else None
-    last_year    = daily[daily["date_day"] >= daily["date_day"].max() - pd.Timedelta(days=365)]
+    last_year    = weekly[weekly["week_date"] >= weekly["week_date"].max() - pd.Timedelta(days=365)]
 
     st.plotly_chart(
         delinquency_trend_chart(last_year, covenant_limit=min_covenant),

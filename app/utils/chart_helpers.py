@@ -43,27 +43,29 @@ def delinquency_trend_chart(
     can see how much headroom remains at a glance.
     """
     df = df.copy()
-    df["date_day"] = pd.to_datetime(df["date_day"])
-    weekly = df.set_index("date_day").resample("W")["delinquency_rate"].mean().reset_index()
-    weekly["rolling"] = weekly["delinquency_rate"].rolling(4, min_periods=1).mean()
+    # Accept either fct_delinquency_weekly (week_date) or fct_portfolio_daily (date_day)
+    date_col = "week_date" if "week_date" in df.columns else "date_day"
+    df[date_col] = pd.to_datetime(df[date_col])
+    df = df.sort_values(date_col)
+    df["rolling"] = df["delinquency_rate"].rolling(4, min_periods=1).mean()
 
     fig = go.Figure()
 
     fig.add_trace(
         go.Scatter(
-            x=weekly["date_day"],
-            y=weekly["delinquency_rate"],
+            x=df[date_col],
+            y=df["delinquency_rate"],
             fill="tozeroy",
             fillcolor="rgba(37,99,235,0.08)",
             line=dict(color=BRAND_COLORS["accent"], width=2),
-            name="Weekly avg",
+            name="Delinquency rate",
             hovertemplate="%{x|%b %d, %Y}<br>Delinquency: %{y:.2%}<extra></extra>",
         )
     )
     fig.add_trace(
         go.Scatter(
-            x=weekly["date_day"],
-            y=weekly["rolling"],
+            x=df[date_col],
+            y=df["rolling"],
             line=dict(color=BRAND_COLORS["warning"], width=2, dash="dot"),
             name="4-wk rolling avg",
             hovertemplate="%{x|%b %d, %Y}<br>Rolling avg: %{y:.2%}<extra></extra>",

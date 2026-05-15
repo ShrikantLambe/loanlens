@@ -26,6 +26,7 @@ _PARQUET_DIR = Path(__file__).parent / "data"     # app/data/
 # Parquet files committed to git — schema__table.parquet
 _PARQUET_TABLES = [
     ("analytics_finance",   "fct_portfolio_daily"),
+    ("analytics_finance",   "fct_delinquency_weekly"),
     ("analytics_finance",   "fct_originations"),
     ("analytics_finance",   "fct_cohort_performance"),
     ("analytics_finance",   "fct_spv_allocation"),
