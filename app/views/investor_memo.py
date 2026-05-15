@@ -13,6 +13,7 @@ import pandas as pd
 import streamlit as st
 
 from app.utils import snowflake_conn as db
+from app.utils.ui import page_header, section_header
 
 logger = logging.getLogger(__name__)
 
@@ -75,10 +76,13 @@ def _generate_pdf(memo: dict) -> bytes:
 
 def render() -> None:
     """Render the Investor Memo (AI) page."""
-    st.title("Investor Memo")
-    st.caption(
+    page_header(
+        "Investor Memo",
         "Claude reads live dbt output and writes structured investor-grade commentary — "
-        "sentiment rating, risk flags, anomaly alerts, and recommended actions."
+        "sentiment rating, risk flags, anomaly alerts, and recommended actions.",
+        badge="AI Generated",
+        badge_color="#faf5ff",
+        badge_text_color="#7c3aed",
     )
 
     try:
@@ -256,7 +260,7 @@ def render() -> None:
     # --- Anomaly alerts ---
     if anomalies:
         st.divider()
-        st.subheader("Anomaly Alerts")
+        section_header("Anomaly Alerts")
         for anomaly in anomalies:
             sev   = anomaly.get("severity", "low")
             color = SEVERITY_COLOR.get(sev, "#6b7280")
@@ -276,7 +280,7 @@ def render() -> None:
     covenant_rows = memo.get("covenant_status", [])
     if covenant_rows:
         st.divider()
-        st.subheader("SPV Covenant Status")
+        section_header("SPV Covenant Status")
         cov_df = pd.DataFrame(covenant_rows)
         st.dataframe(cov_df, use_container_width=True, hide_index=True)
 

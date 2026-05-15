@@ -18,6 +18,7 @@ from app.utils.chart_helpers import (
     delinquency_trend_chart,
     origination_volume_chart,
 )
+from app.utils.ui import page_header, section_header
 
 
 @st.cache_data(ttl=300)
@@ -128,10 +129,10 @@ def _spv_covenant_row(spv: pd.DataFrame) -> None:
 
 def render() -> None:
     """Render the Portfolio Overview page."""
-    st.title("Portfolio Overview")
-    st.caption(
+    page_header(
+        "Portfolio Overview",
         "Real-time portfolio health — covenants, delinquency trends, "
-        "origination volume, and data-integrity status."
+        "origination volume, and data-integrity status.",
     )
 
     try:
@@ -217,12 +218,14 @@ def render() -> None:
     st.divider()
 
     # 4. SPV COVENANT HEADROOM
+    section_header("SPV Covenant Headroom",
+                   "Green = available headroom before breach · Red = consumed by delinquency")
     _spv_covenant_row(spv)
 
     st.divider()
 
     # 5. RECONCILIATION BADGE — data integrity at a glance
-    st.subheader("Data Integrity")
+    section_header("Data Integrity")
     if not recon.empty:
         all_pass  = all(r == "PASS" for r in recon["reconciliation_status"])
         ts        = str(recon.iloc[0].get("reconciled_at", ""))[:19]

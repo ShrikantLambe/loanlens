@@ -13,6 +13,7 @@ import streamlit as st
 
 from app.utils import snowflake_conn as db
 from app.utils.chart_helpers import spv_covenant_comparison_chart, BRAND_COLORS
+from app.utils.ui import page_header, section_header
 
 
 @st.cache_data(ttl=300)
@@ -85,11 +86,14 @@ def _detail_card(row: pd.Series) -> None:
 
 def render() -> None:
     """Render the SPV Reporting page."""
-    st.title("SPV Reporting")
-    st.caption(
-        "Each Special Purpose Vehicle (SPV) is a ring-fenced legal entity holding loans "
-        "funded by a specific lending facility. Breaching a facility's covenant means the "
-        "lender can stop advancing new capital — which directly limits origination capacity."
+    page_header(
+        "SPV Reporting",
+        "Each Special Purpose Vehicle is a ring-fenced legal entity funded by a specific "
+        "lending facility. A covenant breach gives the lender the right to stop advancing "
+        "new capital — directly limiting origination capacity.",
+        badge="3 Active Facilities",
+        badge_color="#ede9fe",
+        badge_text_color="#6d28d9",
     )
 
     try:
@@ -122,17 +126,16 @@ def render() -> None:
     st.divider()
 
     # 2. COMPARISON CHART — all SPVs in one view
-    st.subheader("Delinquency Rate vs. Covenant Limit")
-    st.caption(
-        "Bars show actual delinquency (blue = OK, red = breach). "
-        "Grey bars show the covenant ceiling. The gap is your operating headroom."
+    section_header(
+        "Delinquency Rate vs. Covenant Limit",
+        "Blue = within limit · Red = breach · Grey = covenant ceiling · Gap = operating headroom",
     )
     st.plotly_chart(spv_covenant_comparison_chart(spv), use_container_width=True)
 
     st.divider()
 
     # 3. DETAIL CARDS
-    st.subheader("Facility Detail")
+    section_header("Facility Detail")
     cols = st.columns(len(spv))
     for col, (_, row) in zip(cols, spv.sort_values("spv_id").iterrows()):
         with col:

@@ -18,6 +18,7 @@ from app.utils.chart_helpers import (
     cohort_default_ranking_chart,
     repayment_curves_chart,
 )
+from app.utils.ui import page_header, section_header
 
 
 @st.cache_data(ttl=300)
@@ -65,11 +66,12 @@ def _insight_callout(summary: pd.DataFrame) -> None:
 
 def render() -> None:
     """Render the Cohort Analysis page."""
-    st.title("Cohort Analysis")
-    st.caption(
+    page_header(
+        "Cohort Analysis",
         "How do loans perform over time, grouped by the month they were originated? "
         "Earlier cohorts are mature; recent cohorts are still developing. "
-        "Deteriorating curves signal underwriting or macro stress."
+        "Deteriorating curves signal underwriting or macro stress.",
+        badge="Vintage View",
     )
 
     try:
@@ -105,32 +107,27 @@ def render() -> None:
     st.divider()
 
     # 2. DEFAULT RANKING — bar chart sorted worst to best
-    st.subheader("Default Rate by Cohort — Worst to Best")
-    st.caption(
-        "Peak cumulative default rate observed for each cohort. "
-        "Red = above 6%, amber = 3–6%, green = below 3%."
+    section_header(
+        "Default Rate by Cohort — Worst to Best",
+        "Peak cumulative default rate · Red > 6% · Amber 3–6% · Green < 3%",
     )
     st.plotly_chart(cohort_default_ranking_chart(df), use_container_width=True)
 
     st.divider()
 
     # 3. HEATMAP — vintage × months-on-book
-    st.subheader("Vintage Heatmap — Default Rate Develops Over Time")
-    st.caption(
-        "Each row is an origination cohort (month). Each column is months since funding. "
-        "Read left-to-right: defaults accumulate as loans age. "
-        "Darker cells = higher cumulative defaults. "
-        "Compare rows to spot which vintages are aging worse than peers."
+    section_header(
+        "Vintage Heatmap — Default Rate Over Loan Life",
+        "Each row = origination cohort · Each column = months since funding · Darker = higher defaults",
     )
     st.plotly_chart(cohort_heatmap(df), use_container_width=True)
 
     st.divider()
 
     # 4. REPAYMENT CURVES — user-selected cohorts
-    st.subheader("Repayment Progress Curves")
-    st.caption(
-        "Track how quickly each cohort repays. Flat or declining curves indicate "
-        "missed payments or defaults. 100% = cohort fully paid off."
+    section_header(
+        "Repayment Progress Curves",
+        "Flat or declining curves = missed payments or defaults · 100% = fully paid off",
     )
 
     worst_label = summary.loc[summary["final_default_rate"].idxmax(), "cohort_label"]
@@ -151,7 +148,7 @@ def render() -> None:
     st.divider()
 
     # 5. SUMMARY TABLE — sortable reference
-    st.subheader("Cohort Summary")
+    section_header("Cohort Summary")
     disp = summary.copy()
     disp["cohort_principal"]    = disp["cohort_principal"].apply(lambda x: f"${x:,.0f}")
     disp["final_default_rate"]  = disp["final_default_rate"].apply(lambda x: f"{x:.2%}")

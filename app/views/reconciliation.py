@@ -11,6 +11,7 @@ import pandas as pd
 import streamlit as st
 
 from app.utils import snowflake_conn as db
+from app.utils.ui import page_header, section_header
 
 # Map snake_case metric names → business-friendly display names
 _METRIC_LABELS = {
@@ -28,11 +29,13 @@ def _load_data() -> pd.DataFrame:
 
 def render() -> None:
     """Render the Reconciliation Audit page."""
-    st.title("Reconciliation Audit")
-    st.caption(
-        "Every number in this dashboard is compared to a control file that "
-        "simulates the loan servicing system — the source of truth. "
-        "Any discrepancy > 0.1% is a hard FAIL and would block the pipeline in production."
+    page_header(
+        "Reconciliation Audit",
+        "Every metric is compared to a control file simulating the loan servicing system. "
+        "Any discrepancy > 0.1% is a hard FAIL that would block the pipeline in production.",
+        badge="4 Checks",
+        badge_color="#f0fdf4",
+        badge_text_color="#15803d",
     )
 
     try:
@@ -79,7 +82,7 @@ def render() -> None:
     st.divider()
 
     # 2. METRIC TABLE — friendly names, human-readable numbers
-    st.subheader("Metric-Level Results")
+    section_header("Metric-Level Results")
 
     display = recon.copy()
     display["metric_name"] = display["metric_name"].map(
@@ -115,7 +118,7 @@ def render() -> None:
     st.divider()
 
     # 3. METHODOLOGY — always visible, not buried
-    st.subheader("How This Works")
+    section_header("How This Works")
     col_a, col_b = st.columns(2)
     with col_a:
         st.markdown(
