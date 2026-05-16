@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 main.py — LoanLens Streamlit entry point.
 
@@ -16,6 +17,21 @@ st.set_page_config(
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
+)
+
+# ── Open Graph / social metadata ─────────────────────────────────────────────
+st.markdown(
+    """
+    <meta property="og:title"       content="LoanLens — AI-powered loan portfolio intelligence"/>
+    <meta property="og:description" content="Streamlit + dbt + DuckDB + Claude. 10K loans, 1.3M servicing events, 3 SPVs. Covenant monitoring, vintage cohort analysis, AI-generated investor memos."/>
+    <meta property="og:image"       content="https://raw.githubusercontent.com/ShrikantLambe/loanlens/main/assets/og-image.png"/>
+    <meta property="og:url"         content="https://loanlens-agentic.streamlit.app"/>
+    <meta property="og:type"        content="website"/>
+    <meta name="twitter:card"       content="summary_large_image"/>
+    <meta name="twitter:title"      content="LoanLens — AI-powered loan portfolio intelligence"/>
+    <meta name="twitter:description"content="Streamlit + dbt + DuckDB + Claude. 10K loans, 1.3M servicing events, 3 SPVs. Covenant monitoring, vintage cohort analysis, AI-generated investor memos."/>
+    """,
+    unsafe_allow_html=True,
 )
 
 # ── Global design system ──────────────────────────────────────────────────────
@@ -288,13 +304,17 @@ st.markdown(
 from app.init_db import ensure_initialized
 ensure_initialized()
 
-# ── Page registry ─────────────────────────────────────────────────────────────
+# ── Page registry — ordered by analyst workflow ───────────────────────────────
+# 1. Overview (where am I?) → 2. SPV (am I at risk of losing facility access?)
+# → 3. Cohort (is underwriting holding up?) → 4. Recon (do I trust the data?)
+# → 5. Memo (export the story)
 _PAGES = [
-    ("overview", "🏠", "Portfolio Overview"),
-    ("cohort",   "📈", "Cohort Analysis"),
-    ("spv",      "🏦", "SPV Reporting"),
-    ("recon",    "🔍", "Reconciliation Audit"),
-    ("memo",     "🤖", "Investor Memo (AI)"),
+    ("overview", "🏠", "Portfolio Overview",      False),
+    ("spv",      "🏦", "SPV Reporting",           False),
+    ("cohort",   "📈", "Cohort Analysis",         False),
+    ("recon",    "🔍", "Reconciliation Audit",    False),
+    ("memo",     "🤖", "Investor Memo",           True),   # True = show AI badge
+    ("arch",     "⚙",  "Architecture",            False),
 ]
 
 if "page" not in st.session_state:
@@ -317,45 +337,144 @@ with st.sidebar:
     # Navigation — active item rendered as a styled div (no split tags);
     # inactive items are st.buttons styled via global CSS.
     current = st.session_state["page"]
-    for key, icon, label in _PAGES:
+    for key, icon, label, is_ai in _PAGES:
+        ai_badge = (
+            "<span style='background:#7c3aed;color:#fff;font-size:9px;font-weight:700;"
+            "padding:2px 6px;border-radius:8px;letter-spacing:.05em;margin-left:6px;"
+            "vertical-align:middle;'>AI</span>"
+            if is_ai else ""
+        )
+        display_label = f"{icon}&nbsp;&nbsp;{label}{ai_badge}"
+
         if current == key:
             st.html(
                 f"<div style='background:rgba(37,99,235,.18);border-left:3px solid #3b82f6;"
                 f"padding:9px 14px 9px 11px;border-radius:8px;color:#93c5fd;"
                 f"font-size:13.5px;font-weight:600;margin:1px 0;cursor:default;"
                 f"letter-spacing:.01em;font-family:Inter,sans-serif;'>"
-                f"{icon}&nbsp;&nbsp;{label}</div>"
+                f"{display_label}</div>"
             )
         else:
-            if st.button(f"{icon}  {label}", key=f"nav_{key}", use_container_width=True):
+            btn_label = f"{icon}  {label}{'  ✦' if is_ai else ''}"
+            if st.button(btn_label, key=f"nav_{key}", use_container_width=True):
                 st.session_state["page"] = key
                 st.rerun()
 
-    # Footer
+    # Footer with external links (Prompt 18)
     st.divider()
     st.html(
-        "<div style='font-size:11px;color:#334155;font-weight:500;"
-        "line-height:1.8;padding:4px 0 8px;font-family:Inter,sans-serif;'>"
-        "10,000 loans &nbsp;·&nbsp; 180K events<br/>"
-        "3 SPVs &nbsp;·&nbsp; dbt + DuckDB + Claude"
+        "<div style='font-family:Inter,sans-serif;padding:4px 0 48px;'>"
+        "<div style='font-size:10px;color:#475569;font-weight:600;"
+        "text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;'>"
+        "Links</div>"
+        "<div style='display:flex;flex-direction:column;gap:4px;'>"
+        "<a href='https://github.com/ShrikantLambe/loanlens' target='_blank' "
+        "style='font-size:12px;color:#64748b;text-decoration:none;'>"
+        "⌥ GitHub — Source Code</a>"
+        "<a href='https://shrikantlambe.github.io' target='_blank' "
+        "style='font-size:12px;color:#64748b;text-decoration:none;'>"
+        "◈ Portfolio — Shrikant Lambe</a>"
+        "</div>"
         "</div>"
     )
+
+# ── Persistent health strip ───────────────────────────────────────────────────
+@st.cache_data(ttl=300)
+def _load_health_data():
+    """Load the minimal data needed for the global health strip."""
+    from app.utils import snowflake_conn as db
+    try:
+        spv     = db.table("fct_spv_allocation")
+        summary = db.table("rpt_portfolio_summary")
+        recon   = db.table("rpt_reconciliation")
+        return spv, summary, recon
+    except Exception:
+        return None, None, None
+
+
+def _health_strip() -> None:
+    """
+    Thin persistent bar shown above every page.
+    Shows: covenant status · delinquency · default · recon status
+    Tappable chips navigate to the relevant page.
+    """
+    spv, summary, recon = _load_health_data()
+    if spv is None or summary is None:
+        return
+
+    row     = summary.iloc[0] if not summary.empty else {}
+    delinq  = float(row.get("delinquency_rate_pct", 0))
+    default = float(row.get("default_rate_pct",     0))
+
+    breaches   = spv[spv["covenant_delinquency_breach"].astype(bool)]
+    n_breach   = len(breaches)
+    recon_pass = (
+        all(r == "PASS" for r in recon["reconciliation_status"])
+        if recon is not None and not recon.empty else None
+    )
+
+    # Build covenant chip
+    if n_breach == 0:
+        cov_bg, cov_fg, cov_txt = "#f0fdf4", "#15803d", "✓ All covenants OK"
+        cov_nav = "spv"
+    else:
+        names = ", ".join(breaches["spv_id"].tolist())
+        cov_bg, cov_fg, cov_txt = "#fee2e2", "#b91c1c", f"⚠ {names} in breach"
+        cov_nav = "spv"
+
+    # Recon chip
+    if recon_pass is True:
+        rec_bg, rec_fg, rec_txt = "#f0fdf4", "#15803d", "✓ Recon PASS"
+    elif recon_pass is False:
+        rec_bg, rec_fg, rec_txt = "#fee2e2", "#b91c1c", "✗ Recon FAIL"
+    else:
+        rec_bg, rec_fg, rec_txt = "#f1f5f9", "#64748b", "Recon n/a"
+
+    chip = (
+        "background:{bg};color:{fg};font-size:11px;font-weight:600;"
+        "padding:3px 10px;border-radius:20px;white-space:nowrap;"
+        "font-family:Inter,sans-serif;"
+    )
+
+    delinq_chip_style = chip.format(bg="#eff6ff", fg="#1d4ed8")
+    default_chip_style = chip.format(bg="#eff6ff", fg="#1d4ed8")
+    cov_chip_style = chip.format(bg=cov_bg, fg=cov_fg)
+    rec_chip_style = chip.format(bg=rec_bg, fg=rec_fg)
+    st.html(
+        f"<div style='display:flex;gap:6px;align-items:center;flex-wrap:wrap;"
+        f"padding:6px 0 12px;border-bottom:1px solid #f1f5f9;margin-bottom:4px;'>"
+        f"<span style='background:#f1f5f9;color:#94a3b8;font-size:10px;font-weight:500;"
+        f"padding:2px 8px;border-radius:12px;white-space:nowrap;"
+        f"font-family:Inter,sans-serif;'>Demo · Synthetic data</span>"
+        f"<span style='color:#e2e8f0;font-size:10px;'>|</span>"
+        f"<span style='{cov_chip_style}'>{cov_txt}</span>"
+        f"<span style='{delinq_chip_style}'>Delinquency {delinq:.2f}%</span>"
+        f"<span style='{default_chip_style}'>Default {default:.2f}%</span>"
+        f"<span style='{rec_chip_style}'>{rec_txt}</span>"
+        f"</div>"
+    )
+
 
 # ── Route ─────────────────────────────────────────────────────────────────────
 page = st.session_state["page"]
 
+_health_strip()   # persistent across all pages
+
 if page == "overview":
     from app.views.overview import render
     render()
-elif page == "cohort":
-    from app.views.cohort_analysis import render
-    render()
 elif page == "spv":
     from app.views.spv_reporting import render
+    render()
+elif page == "cohort":
+    from app.views.cohort_analysis import render
     render()
 elif page == "recon":
     from app.views.reconciliation import render
     render()
 elif page == "memo":
     from app.views.investor_memo import render
+    render()
+elif page == "arch":
+    from app.views.architecture import render
     render()

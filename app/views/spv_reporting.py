@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 spv_reporting.py — SPV facility monitoring and covenant compliance.
 

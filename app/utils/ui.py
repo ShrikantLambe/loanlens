@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 ui.py — Shared UI components for LoanLens.
 
@@ -11,6 +12,22 @@ closing tags and attribute strings to appear as raw visible text.
 import streamlit as st
 
 
+_STACK_BADGES = [
+    ("10K loans",   "#f1f5f9", "#475569"),
+    ("1.3M events", "#f1f5f9", "#475569"),
+    ("3 SPVs",      "#f1f5f9", "#475569"),
+    ("dbt 1.8",     "#ede9fe", "#6d28d9"),
+    ("DuckDB",      "#e0f2fe", "#0369a1"),
+    ("Claude AI",   "#faf5ff", "#7c3aed"),
+]
+
+_STACK_HTML = " ".join(
+    f"<span style='background:{bg};color:{fg};font-size:10px;font-weight:600;"
+    f"padding:2px 8px;border-radius:12px;white-space:nowrap;'>{label}</span>"
+    for label, bg, fg in _STACK_BADGES
+)
+
+
 def page_header(
     title: str,
     subtitle: str,
@@ -18,7 +35,7 @@ def page_header(
     badge_color: str = "#dbeafe",
     badge_text_color: str = "#1d4ed8",
 ) -> None:
-    """Polished page-level header."""
+    """Polished page-level header with optional badge and persistent stack pills."""
     badge_html = (
         f"<span style='background:{badge_color};color:{badge_text_color};"
         f"font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;"
@@ -26,7 +43,7 @@ def page_header(
         if badge else ""
     )
     st.html(
-        f"<div style='margin-bottom:24px;padding-bottom:20px;"
+        f"<div style='margin-bottom:20px;padding-bottom:16px;"
         f"border-bottom:1px solid #f1f5f9;font-family:Inter,sans-serif;'>"
         f"<div style='display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:6px;'>"
         f"<div style='font-size:26px;font-weight:800;color:#0f172a;"
@@ -34,7 +51,11 @@ def page_header(
         f"{badge_html}"
         f"</div>"
         f"<div style='font-size:13.5px;color:#64748b;line-height:1.55;"
-        f"max-width:700px;'>{subtitle}</div>"
+        f"max-width:700px;margin-bottom:10px;'>{subtitle}</div>"
+        f"<div style='display:flex;gap:5px;flex-wrap:wrap;align-items:center;'>"
+        f"<span style='font-size:10px;color:#94a3b8;font-weight:500;margin-right:2px;'>Built with</span>"
+        f"{_STACK_HTML}"
+        f"</div>"
         f"</div>"
     )
 

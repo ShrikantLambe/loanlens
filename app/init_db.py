@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 init_db.py — One-time DuckDB initialization for Streamlit Community Cloud.
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 chart_helpers.py — Reusable Plotly chart builders for the LoanLens dashboard.
 """

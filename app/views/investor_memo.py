@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 investor_memo.py — LLM-generated investor memo page.
 

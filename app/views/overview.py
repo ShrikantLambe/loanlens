@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 overview.py — Portfolio health scorecard.
 
