@@ -79,8 +79,29 @@ def _seed() -> None:
 
 
 def needs_init() -> bool:
-    """Return True when the DuckDB file doesn't exist yet."""
-    return not _DUCKDB.exists()
+    """Return True when the DuckDB file doesn't exist or is missing required tables."""
+    if not _DUCKDB.exists():
+        return True
+    try:
+        import duckdb
+        conn = duckdb.connect(str(_DUCKDB), read_only=True)
+        existing = {
+            row[0]
+            for row in conn.execute(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_schema LIKE 'analytics%'"
+            ).fetchall()
+        }
+        conn.close()
+        required = {t for _, t in _PARQUET_TABLES}
+        missing = required - existing
+        if missing:
+            logger.info("DuckDB missing tables %s — will reinitialize", missing)
+            return True
+    except Exception as exc:
+        logger.warning("DuckDB integrity check failed (%s) — will reinitialize", exc)
+        return True
+    return False
 
 
 def ensure_initialized() -> None:
