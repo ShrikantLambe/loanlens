@@ -1,9 +1,4 @@
 from __future__ import annotations
-"""
-main.py — LoanLens Streamlit entry point.
-
-Run: streamlit run app/main.py
-"""
 
 import sys
 from pathlib import Path
