@@ -17,7 +17,18 @@ import copy
 import hashlib
 import pandas as pd
 import streamlit as st
-from streamlit_echarts import st_echarts, JsCode
+from streamlit_echarts import st_echarts
+
+# ── JavaScript helper ──────────────────────────────────────────────────────────
+# streamlit-echarts wraps JS callbacks in "--x_x--0_0--" sentinel markers so the
+# frontend can distinguish them from plain strings and eval() them as functions.
+# _js() does the same but is not JSON-serializable in Streamlit 1.35+.
+# Using a plain string with the sentinels is identical to JsCode and IS serializable.
+_P = "--x_x--0_0--"
+
+def _js(code: str) -> str:
+    """Wrap a JS function string so ECharts treats it as executable code."""
+    return f"{_P}{code}{_P}"
 
 
 # ── Design tokens ─────────────────────────────────────────────────────────────
@@ -143,7 +154,7 @@ def delinquency_trend_option(
     actual = (df["delinquency_rate"] * 100).round(3).tolist()
     rolling = (df["rolling"] * 100).round(3).tolist()
 
-    tooltip_fmt = JsCode(
+    tooltip_fmt = _js(
         "function(params){"
         "var h='<div style=\"font-weight:700;margin-bottom:5px;\">'+params[0].name+'</div>';"
         "params.forEach(function(p){"
@@ -211,7 +222,7 @@ def delinquency_trend_option(
             "type": "value",
             "axisLabel": {
                 "color": "#8898aa",
-                "formatter": JsCode("function(v){return v.toFixed(1)+'%'}"),
+                "formatter": _js("function(v){return v.toFixed(1)+'%'}"),
             },
             "splitLine": {"lineStyle": {"color": "#eaeff5", "type": "dashed"}},
         },
@@ -309,7 +320,7 @@ def origination_volume_option(df: pd.DataFrame) -> dict:
         "z": 10,
     })
 
-    tooltip_fmt = JsCode(
+    tooltip_fmt = _js(
         "function(params){"
         "var h='<div style=\"font-weight:700;margin-bottom:5px;\">'+params[0].name+'</div>';"
         "var tot=0;"
@@ -340,7 +351,7 @@ def origination_volume_option(df: pd.DataFrame) -> dict:
                 "type": "value",
                 "name": "Volume",
                 "axisLabel": {
-                    "formatter": JsCode("function(v){return '$'+(v/1e6).toFixed(0)+'M'}"),
+                    "formatter": _js("function(v){return '$'+(v/1e6).toFixed(0)+'M'}"),
                     "color": "#8898aa",
                 },
                 "splitLine": {"lineStyle": {"color": "#eaeff5", "type": "dashed"}},
@@ -350,7 +361,7 @@ def origination_volume_option(df: pd.DataFrame) -> dict:
                 "type": "value",
                 "name": "Loans",
                 "axisLabel": {
-                    "formatter": JsCode("function(v){return v.toLocaleString()}"),
+                    "formatter": _js("function(v){return v.toLocaleString()}"),
                     "color": "#8898aa",
                 },
                 "splitLine": {"show": False},
@@ -391,7 +402,7 @@ def spv_bar_option(df: pd.DataFrame) -> dict:
             color = PALETTE["primary"]
         actual_data.append({"value": a, "itemStyle": {"color": color}})
 
-    tooltip_fmt = JsCode(
+    tooltip_fmt = _js(
         "function(params){"
         "var a=params[0]?params[0].value:0, l=params[1]?params[1].value:0;"
         "var h=l-a;"
@@ -418,7 +429,7 @@ def spv_bar_option(df: pd.DataFrame) -> dict:
         "yAxis": {
             "type": "value",
             "axisLabel": {
-                "formatter": JsCode("function(v){return v+'%'}"),
+                "formatter": _js("function(v){return v+'%'}"),
                 "color": "#8898aa",
             },
             "splitLine": {"lineStyle": {"color": "#eaeff5", "type": "dashed"}},
@@ -432,7 +443,7 @@ def spv_bar_option(df: pd.DataFrame) -> dict:
                 "label": {
                     "show": True,
                     "position": "top",
-                    "formatter": JsCode("function(p){return p.value.toFixed(2)+'%'}"),
+                    "formatter": _js("function(p){return p.value.toFixed(2)+'%'}"),
                     "color": "#3d4f63",
                     "fontSize": 12,
                     "fontWeight": "700",
@@ -450,7 +461,7 @@ def spv_bar_option(df: pd.DataFrame) -> dict:
                 "label": {
                     "show": True,
                     "position": "top",
-                    "formatter": JsCode("function(p){return p.value.toFixed(1)+'%'}"),
+                    "formatter": _js("function(p){return p.value.toFixed(1)+'%'}"),
                     "color": "#8898aa",
                     "fontSize": 10,
                 },
@@ -516,11 +527,11 @@ def covenant_gauge_option(actual: float, limit: float) -> dict:
                 "distance": 14,
                 "color": "#8898aa",
                 "fontSize": 9,
-                "formatter": JsCode("function(v){return v.toFixed(0)+'%'}"),
+                "formatter": _js("function(v){return v.toFixed(0)+'%'}"),
             },
             "detail": {
                 "valueAnimation": True,
-                "formatter": JsCode("function(v){return v.toFixed(2)+'%'}"),
+                "formatter": _js("function(v){return v.toFixed(2)+'%'}"),
                 "color": needle_color,
                 "fontSize": 16,
                 "fontWeight": "700",
@@ -564,7 +575,7 @@ def cohort_ranking_option(df: pd.DataFrame, top_n: int | None = None) -> dict:
         },
         "tooltip": {
             "trigger": "axis",
-            "formatter": JsCode(
+            "formatter": _js(
                 "function(p){return '<b>'+p[0].name+'</b><br/>Default: <strong>'+p[0].value.toFixed(2)+'%</strong>';}"
             ),
         },
@@ -587,7 +598,7 @@ def cohort_ranking_option(df: pd.DataFrame, top_n: int | None = None) -> dict:
             "type": "value",
             "max": round(max_v * 1.15, 1),
             "axisLabel": {
-                "formatter": JsCode("function(v){return v+'%'}"),
+                "formatter": _js("function(v){return v+'%'}"),
                 "color": "#8898aa",
                 "fontFamily": "'JetBrains Mono',monospace",
             },
@@ -607,7 +618,7 @@ def cohort_ranking_option(df: pd.DataFrame, top_n: int | None = None) -> dict:
             "label": {
                 "show": True,
                 "position": "right",
-                "formatter": JsCode("function(p){return p.value.toFixed(1)+'%'}"),
+                "formatter": _js("function(p){return p.value.toFixed(1)+'%'}"),
                 "color": "#3d4f63",
                 "fontSize": 10,
                 "fontFamily": "'JetBrains Mono',monospace",
@@ -684,7 +695,7 @@ def cohort_heatmap_option(df: pd.DataFrame) -> dict:
         },
         "tooltip": {
             "trigger": "item",
-            "formatter": JsCode(
+            "formatter": _js(
                 "function(p){return 'Cohort: <b>'+p.name+'</b><br/>Month '+p.data[0]+': <strong>'+p.data[2].toFixed(2)+'%</strong>';}"
             ),
         },
@@ -767,7 +778,7 @@ def repayment_curves_option(df: pd.DataFrame, cohorts: list[str]) -> dict:
         },
         "tooltip": {
             "trigger": "axis",
-            "formatter": JsCode(
+            "formatter": _js(
                 "function(params){"
                 "var h='<b>Month '+params[0].data[0]+'</b><br/>';"
                 "params.forEach(function(p){if(p.data&&p.data.length)h+=p.marker+' '+p.seriesName+': <strong>'+p.data[1].toFixed(1)+'%</strong><br/>';});"
@@ -785,7 +796,7 @@ def repayment_curves_option(df: pd.DataFrame, cohorts: list[str]) -> dict:
             "type": "value",
             "min": 0, "max": 115,
             "axisLabel": {
-                "formatter": JsCode("function(v){return v+'%'}"),
+                "formatter": _js("function(v){return v+'%'}"),
                 "color": "#8898aa",
             },
             "splitLine": {"lineStyle": {"color": "#eaeff5", "type": "dashed"}},
@@ -826,7 +837,7 @@ def recon_ring_option(passed: int, total: int) -> dict:
             "data": [{"value": pct}],
             "detail": {
                 "valueAnimation": True,
-                "formatter": JsCode(
+                "formatter": _js(
                     f"function(){{return '{passed}/{total}\\n{label}';}}"
                 ),
                 "color": color,
