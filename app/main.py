@@ -330,8 +330,6 @@ st.markdown(
         border-bottom: 0 !important;
         padding-bottom: 6px !important;
         margin-bottom: 0 !important;
-        /* ── FIX 2: equal card height regardless of delta presence ── */
-        min-height: 108px !important;
     }
     div[data-testid="column"] .element-container:has(div[data-testid="stMetric"]) {
         margin-bottom: 0 !important;
@@ -352,11 +350,26 @@ st.markdown(
     /* ── 20. ECharts component container ── */
     [data-testid="stCustomComponentV1"] { border-radius: 16px !important; }
 
-    /* ── FIX 1: Nav alignment — active item dot shifts text; match inactive indent ──
-       Remove the visual offset caused by the 5px dot + 10px margin in the active pill.
-       Both active and inactive items now start label text at the same x position.    */
+    /* ── FIX 1: Nav alignment ──────────────────────────────────────────────────
+       Root cause: Streamlit wraps button text in <p> which has its own margin/
+       padding that offsets text right vs the active pill div.
+       Fix: zero the inner <p>, set controlled padding on the button itself.   */
     section[data-testid="stSidebar"] .stButton > button {
         padding: 9px 12px 9px 14px !important;
+    }
+    section[data-testid="stSidebar"] .stButton > button > p,
+    section[data-testid="stSidebar"] .stButton > button > div {
+        padding: 0 !important;
+        margin: 0 !important;
+        line-height: inherit !important;
+    }
+
+    /* ── FIX 2: KPI equal heights ───────────────────────────────────────────────
+       Cards with delta: 20px pad-top + 16px label + 8px gap + 38px value
+                         + 8px gap + 24px delta + 6px pad-bottom = 120px
+       Cards without:   20+16+8+38+6 = 88px → min-height forces them to match */
+    div[data-testid="column"] div[data-testid="stMetric"] {
+        min-height: 130px !important;
     }
     </style>
     """,
@@ -434,7 +447,9 @@ with st.sidebar:
                 f"{display_label}</div>"
             )
         else:
-            btn_label = f"{icon}  {label}{'  ✦' if is_ai else ''}"
+            #   = non-breaking space (same as &nbsp; in active pill HTML)
+            # Two regular spaces collapse to one in HTML rendering, causing misalignment
+            btn_label = f"{icon}  {label}{'  ✦' if is_ai else ''}"
             if st.button(btn_label, key=f"nav_{key}", use_container_width=True):
                 st.session_state["page"] = key
                 st.rerun()

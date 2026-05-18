@@ -227,7 +227,11 @@ def delinquency_trend_option(
             "top": 0, "left": 0,
         },
         "tooltip": {"formatter": tooltip_fmt},
-        "legend": {"data": ["Delinquency Rate", "4-wk Rolling Avg"]},
+        "legend": {
+            "data": ["Delinquency Rate", "4-wk Rolling Avg"],
+            "top": 8,
+            "right": 52,
+        },
         "xAxis": {
             "type": "category",
             "data": dates,
@@ -357,10 +361,12 @@ def origination_volume_option(df: pd.DataFrame) -> dict:
             "textStyle": {"fontSize": 15, "fontWeight": "700", "color": "#060d1f"},
         },
         "tooltip": {"trigger": "axis", "formatter": tooltip_fmt},
-        # 6 legend items (5 platforms + loan count) — move to bottom scrollable
-        # so they don't crowd the chart title on narrow 50% columns
+        # 6 legend items (5 platforms + loan count) — bottom scrollable.
+        # "top": "auto" MUST be set to override BASE_OPTION's "top": 8;
+        # ECharts rules: when both top and bottom are present, top wins.
         "legend": {
             "data": [p.title() for p in platforms] + ["Loan Count"],
+            "top": "auto",
             "bottom": 28,
             "type": "scroll",
             "pageTextStyle": {"color": "#8898aa", "fontSize": 10},
