@@ -48,45 +48,45 @@ st.markdown(
     [data-testid="stToolbar"] { display: none !important; }
 
     /* ── 3. Canvas ── */
-    .main { background: #f0f4f8 !important; }
-    .main .block-container {
-        padding-top: 0.5rem !important;
+    .stApp, [data-testid="stAppViewContainer"] {
+        background: #f0f4f8 !important;
+    }
+    .main, section[data-testid="stMain"] {
+        background: #f0f4f8 !important;
+    }
+    .main .block-container,
+    [data-testid="stMainBlockContainer"] {
+        padding-top: 0.75rem !important;
         padding-bottom: 3.5rem !important;
         max-width: 1380px !important;
-        /* Must be visible so child position:sticky works */
-        overflow: visible !important;
-    }
-    /* Allow sticky children to escape their stacking context */
-    section[data-testid="stMain"],
-    section[data-testid="stMainBlockContainer"],
-    [data-testid="stAppViewContainer"] > section {
-        overflow: visible !important;
     }
 
-    /* ── 4. Metric cards — left-accent rule (Bloomberg/Stripe pattern) ── */
-    [data-testid="stMetric"] {
-        background: #ffffff;
-        border-radius: 16px;
+    /* ── 4. Metric cards — left-accent (Bloomberg/Stripe pattern) ── */
+    div[data-testid="stMetric"] {
+        background: #ffffff !important;
+        border-radius: 16px !important;
         padding: 20px 22px 18px !important;
-        border: 1px solid #e4e9f0;
-        border-left: 4px solid #2563eb;
-        box-shadow: 0 1px 4px rgba(15,23,42,.05);
-        position: relative;
-        transition: box-shadow .18s ease, transform .18s ease;
+        border: 1px solid #e4e9f0 !important;
+        border-left: 4px solid #2563eb !important;
+        box-shadow: 0 1px 4px rgba(15,23,42,.05) !important;
+        position: relative !important;
+        transition: box-shadow .18s ease, transform .18s ease !important;
     }
-    [data-testid="stMetric"]:hover {
-        box-shadow: 0 6px 20px rgba(37,99,235,.10), 0 1px 4px rgba(15,23,42,.06);
-        transform: translateY(-2px);
+    div[data-testid="stMetric"]:hover {
+        box-shadow: 0 6px 20px rgba(37,99,235,.10), 0 1px 4px rgba(15,23,42,.06) !important;
+        transform: translateY(-2px) !important;
     }
-    [data-testid="stMetric"]::before { display: none; }
-    [data-testid="stMetricLabel"] > div {
+    div[data-testid="stMetric"]::before { display: none !important; }
+    div[data-testid="stMetricLabel"] > div,
+    div[data-testid="stMetricLabel"] label {
         font-size: 10.5px !important;
         font-weight: 700 !important;
         color: #8898aa !important;
         text-transform: uppercase !important;
         letter-spacing: .09em !important;
     }
-    [data-testid="stMetricValue"] > div {
+    div[data-testid="stMetricValue"] > div,
+    div[data-testid="stMetricValue"] p {
         font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
         font-size: 28px !important;
         font-weight: 600 !important;
@@ -96,7 +96,8 @@ st.markdown(
         line-height: 1.15 !important;
         margin-top: 8px !important;
     }
-    [data-testid="stMetricDelta"] > div {
+    div[data-testid="stMetricDelta"] > div,
+    div[data-testid="stMetricDelta"] p {
         font-size: 12px !important;
         font-weight: 600 !important;
         margin-top: 6px !important;
@@ -139,7 +140,9 @@ st.markdown(
     }
 
     /* ── 8. Sidebar ── */
-    section[data-testid="stSidebar"] {
+    section[data-testid="stSidebar"],
+    [data-testid="stSidebar"] > div,
+    [data-testid="stSidebarContent"] {
         background: linear-gradient(175deg, #060d1f 0%, #0d1a30 60%, #0a1628 100%) !important;
         border-right: 1px solid rgba(99,130,200,.1) !important;
     }
@@ -247,7 +250,8 @@ st.markdown(
     }
 
     /* ── 11. Plotly chart container ── */
-    [data-testid="stPlotlyChart"] {
+    [data-testid="stPlotlyChart"],
+    div[data-testid="stPlotlyChart"] > div {
         background: #ffffff !important;
         border-radius: 16px !important;
         overflow: hidden !important;
@@ -491,15 +495,14 @@ def _health_strip() -> None:
         )
 
     st.html(
-        # Sticky wrapper — stays pinned at top of main content as user scrolls
         "<div style='"
-        "position:sticky;top:0;z-index:999;"
-        "background:linear-gradient(135deg,#0a1628dd,#0f1f3add);"
-        "backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);"
-        "border-bottom:1px solid rgba(99,130,200,.14);"
-        "padding:8px 4px 10px;"
-        "margin-bottom:16px;"
+        "background:linear-gradient(135deg,#0c1a30,#111f3a);"
+        "border:1px solid rgba(99,130,200,.14);"
+        "border-radius:14px;"
+        "padding:10px 16px;"
+        "margin-bottom:18px;"
         "display:flex;gap:6px;align-items:center;flex-wrap:wrap;"
+        "box-shadow:0 2px 12px rgba(8,15,35,.18);"
         "font-family:Inter,sans-serif;'>"
         # Demo badge — neutral grey
         f"<span style='{_b}{dem_chip_css}'>"
