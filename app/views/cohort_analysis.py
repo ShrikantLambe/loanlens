@@ -46,8 +46,8 @@ def _insight_callout(summary: pd.DataFrame) -> None:
         st.metric(
             "Worst Cohort",
             worst_label,
-            f"{worst_rate:.2%} default rate",
-            delta_color="inverse",
+            f"↑ {worst_rate:.2%} default rate",
+            delta_color="inverse",   # red — rising defaults are adverse
             help=(
                 "The origination vintage with the highest peak cumulative default rate. "
                 "Source: fct_cohort_performance · Metric: MAX(cumulative_default_rate). "
@@ -60,6 +60,7 @@ def _insight_callout(summary: pd.DataFrame) -> None:
             "Best Cohort",
             best_label,
             f"{best_rate:.2%} default rate",
+            delta_color="off",       # neutral grey — no directional arrow; low is good
             help=(
                 "The origination vintage with the lowest peak cumulative default rate. "
                 "Recent 2024 cohorts often rank best because they haven't yet had enough "
@@ -126,7 +127,26 @@ def render() -> None:
         "Default Rate by Cohort — Worst to Best",
         "Peak cumulative default rate · Red > 6% · Amber 3–6% · Green < 3%",
     )
-    st.plotly_chart(cohort_default_ranking_chart(df), use_container_width=True)
+    _col_toggle, _col_n = st.columns([3, 1])
+    with _col_toggle:
+        show_all = st.toggle("Show all cohorts", value=False,
+                             help="Default: top 10 worst. Toggle to see every vintage.")
+    with _col_n:
+        top_n = st.select_slider(
+            "Top N", options=[5, 10, 15, 20], value=10,
+            disabled=show_all,
+            label_visibility="collapsed",
+        ) if not show_all else None
+
+    _ranking_df = df if show_all else df.copy()
+    if not show_all and top_n is not None:
+        # Keep only the top-N worst cohorts by peak default rate
+        _worst_labels = (
+            summary.nlargest(top_n, "final_default_rate")["cohort_label"].tolist()
+        )
+        _ranking_df = df[df["cohort_label"].isin(_worst_labels)]
+
+    st.plotly_chart(cohort_default_ranking_chart(_ranking_df), use_container_width=True)
 
     st.divider()
 

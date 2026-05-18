@@ -80,15 +80,25 @@ def delinquency_trend_chart(
     )
 
     if covenant_limit is not None:
+        # Shaded breach zone — faint red fill above the limit line
+        y_max = float(df["delinquency_rate"].max()) * 1.15
+        fig.add_hrect(
+            y0=covenant_limit,
+            y1=max(y_max, covenant_limit * 1.3),
+            fillcolor="rgba(239,68,68,0.07)",
+            line_width=0,
+            layer="below",
+        )
+        # Bold dashed covenant line with right-side annotation
         fig.add_hline(
             y=covenant_limit,
             line_dash="dash",
             line_color=BRAND_COLORS["danger"],
-            line_width=1.5,
-            opacity=0.8,
-            annotation_text=f"  Tightest covenant: {covenant_limit:.1%}",
-            annotation_position="top left",
-            annotation_font=dict(size=11, color=BRAND_COLORS["danger"]),
+            line_width=2,
+            opacity=0.9,
+            annotation_text=f"Covenant limit {covenant_limit:.1%}  ",
+            annotation_position="top right",
+            annotation_font=dict(size=11, color=BRAND_COLORS["danger"], family="Inter"),
         )
 
     fig.update_layout(

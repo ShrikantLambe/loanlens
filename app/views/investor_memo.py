@@ -112,17 +112,38 @@ def render() -> None:
     # --- Buttons: layout differs by state ---
     has_memo = "memo" in st.session_state
     if not has_memo:
-        # State 1: prominent single CTA with description
+        # State 1 — proper "ready" panel with value proposition
         st.html(
-            "<div style='background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;"
-            "padding:20px 24px;margin-bottom:16px;font-family:Inter,sans-serif;'>"
-            "<div style='font-size:15px;font-weight:700;color:#1e40af;margin-bottom:6px;'>"
-            "Generate AI-powered investor commentary</div>"
-            "<div style='font-size:13px;color:#3b82f6;line-height:1.5;'>"
-            "Claude will read the live portfolio data and write structured output: "
-            "executive summary, risk flags, cohort observations, and recommended actions — "
-            "ready to export as a PDF memo."
-            "</div></div>"
+            "<div style='border:1px solid #e4e9f0;border-radius:20px;"
+            "padding:36px 40px 32px;text-align:center;background:#fff;"
+            "font-family:Inter,sans-serif;margin:4px 0 20px;'>"
+            # Glowing AI icon disc
+            "<div style='width:64px;height:64px;border-radius:18px;"
+            "background:linear-gradient(135deg,#7c3aed,#6366f1);"
+            "display:flex;align-items:center;justify-content:center;"
+            "margin:0 auto 20px;"
+            "box-shadow:0 8px 28px rgba(124,58,237,.35);font-size:28px;'>🤖</div>"
+            # Headline
+            "<div style='font-size:22px;font-weight:800;color:#060d1f;"
+            "letter-spacing:-.035em;margin-bottom:10px;'>"
+            "AI Investor Commentary</div>"
+            # Sub-line
+            "<div style='font-size:14px;color:#5c6f85;line-height:1.6;"
+            "max-width:500px;margin:0 auto 24px;'>"
+            "Claude reads your live dbt models and writes structured, "
+            "investor-grade commentary in under 10 seconds.</div>"
+            # What gets generated — 2-col grid
+            "<div style='display:inline-grid;grid-template-columns:1fr 1fr;"
+            "gap:8px 40px;text-align:left;margin-bottom:8px;"
+            "font-size:13.5px;color:#3d4f63;font-weight:500;'>"
+            "<div>📊 Executive Summary</div>"
+            "<div>⚠ Risk Flags</div>"
+            "<div>📈 Cohort Observations</div>"
+            "<div>✅ Recommended Actions</div>"
+            "<div>🎯 Sentiment Rating</div>"
+            "<div>🔍 Anomaly Detection</div>"
+            "</div>"
+            "</div>"
         )
         generate = st.button(
             "Generate AI Commentary →", type="primary", use_container_width=True
@@ -143,42 +164,54 @@ def render() -> None:
             )
 
     if generate:
-        with st.spinner("Calling Claude… (~5–10 seconds)"):
-            demo_mode = False
-            try:
+        demo_mode = False
+        try:
+            with st.status("Generating AI commentary…", expanded=True) as _status:
+                st.write("📊 Reading live dbt output…")
                 from ai_layer.portfolio_narrator import generate_portfolio_commentary
                 from ai_layer.anomaly_agent import detect_anomalies
 
+                st.write("🧠 Analyzing portfolio metrics and cohort trends…")
                 commentary = generate_portfolio_commentary(
                     summary=summary,
                     recent_trend=daily,
                     spv_data=spv_data,
                     covenant_breaches=breaches,
                 )
+                st.write("🔍 Running anomaly detection on delinquency time series…")
                 anomalies = detect_anomalies(daily_data=daily, spv_data=spv_data)
 
-            except Exception as e:
-                err = str(e)
-                if any(k in err for k in ("usage limits", "429", "400", "quota")):
-                    logger.warning("Anthropic API unavailable (%s) — demo mode.", e)
+                st.write("📝 Drafting investor memo…")
+                from ai_layer.memo_generator import build_memo
+                memo = build_memo(commentary, anomalies, summary, spv_data)
+
+                _status.update(label="Commentary ready!", state="complete", expanded=False)
+
+        except Exception as e:
+            err = str(e)
+            if any(k in err for k in ("usage limits", "429", "400", "quota", "rate")):
+                logger.warning("Anthropic API unavailable (%s) — demo mode.", e)
+                with st.status("Loading demo commentary…", expanded=True) as _status:
+                    st.write("⚡ API quota reached — loading pre-computed demo…")
                     from ai_layer.demo_commentary import demo_portfolio_commentary, demo_anomalies
                     commentary = demo_portfolio_commentary(summary)
                     anomalies  = demo_anomalies(spv_data)
-                    demo_mode  = True
-                else:
-                    st.error(f"AI generation failed: {e}")
-                    logger.exception("AI generation error")
-                    return
+                    from ai_layer.memo_generator import build_memo
+                    memo = build_memo(commentary, anomalies, summary, spv_data)
+                    demo_mode = True
+                    _status.update(label="Demo commentary loaded", state="complete", expanded=False)
+            else:
+                st.error(f"AI generation failed: {e}")
+                logger.exception("AI generation error")
+                return
 
-            from ai_layer.memo_generator import build_memo
-            memo = build_memo(commentary, anomalies, summary, spv_data)
-            if demo_mode:
-                memo["model_used"] = "demo-mode (API quota exceeded)"
+        if demo_mode:
+            memo["model_used"] = "demo-mode (API quota exceeded)"
 
-            st.session_state["memo"]        = memo
-            st.session_state["commentary"]  = commentary
-            st.session_state["anomalies"]   = anomalies
-            st.session_state["demo_mode"]   = demo_mode
+        st.session_state["memo"]        = memo
+        st.session_state["commentary"]  = commentary
+        st.session_state["anomalies"]   = anomalies
+        st.session_state["demo_mode"]   = demo_mode
 
     # --- PDF download (triggered separately so it doesn't re-run generation) ---
     if pdf_btn and "memo" in st.session_state:

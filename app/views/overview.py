@@ -43,6 +43,10 @@ def _status_banner(spv: pd.DataFrame, current_delinq: float) -> None:
             "Lender has right to pull funding. Immediate review required.",
             icon="🔴",
         )
+        if st.button("→ View SPV Reporting", key="banner_goto_spv",
+                     help="Jump to the SPV Reporting page for full facility detail."):
+            st.session_state["page"] = "spv"
+            st.rerun()
         return
 
     # Check headroom tightness (< 2pp headroom = amber)
@@ -82,30 +86,35 @@ def _spv_covenant_row(spv: pd.DataFrame) -> None:
         used_color   = BRAND_COLORS["danger"] if breach else "#93c5fd"
         head_color   = "#fecaca" if breach else "#bbf7d0"
 
+        card_bg = "rgba(239,68,68,0.04)" if breach else "#ffffff"
+        bdr_l   = f"border-left:4px solid {status_color};"
         with col:
             st.html(
-                f"<div style='border:1px solid #e2e8f0;border-radius:12px;"
-                f"padding:16px 18px;background:#fff;font-family:Inter,sans-serif;'>"
+                f"<div style='border:1px solid #e4e9f0;{bdr_l}border-radius:12px;"
+                f"padding:16px 18px;background:{card_bg};font-family:Inter,sans-serif;"
+                f"box-shadow:0 1px 4px rgba(15,23,42,.05);'>"
                 f"<div style='display:flex;justify-content:space-between;"
                 f"align-items:center;margin-bottom:4px;'>"
-                f"<span style='font-size:17px;font-weight:800;color:#1e293b;'>{row['spv_id']}</span>"
-                f"<span style='font-size:11px;font-weight:700;color:{status_color};'>{status_label}</span>"
+                f"<span style='font-size:17px;font-weight:800;color:#0f172a;'>{row['spv_id']}</span>"
+                f"<span style='font-size:11px;font-weight:700;color:{status_color};"
+                f"background:{'rgba(239,68,68,.1)' if breach else 'rgba(16,185,129,.1)'};"
+                f"padding:2px 8px;border-radius:10px;'>{status_label}</span>"
                 f"</div>"
                 f"<div style='font-size:11px;color:#94a3b8;margin-bottom:10px;'>{row.get('facility_name','')}</div>"
-                f"<div style='display:flex;height:8px;border-radius:4px;"
-                f"overflow:hidden;background:#f1f5f9;margin-bottom:6px;'>"
-                f"<div style='width:{used_pct};background:{used_color};'></div>"
+                f"<div style='display:flex;height:10px;border-radius:5px;"
+                f"overflow:hidden;background:#f0f4f8;margin-bottom:6px;'>"
+                f"<div style='width:{used_pct};background:{used_color};border-radius:5px 0 0 5px;'></div>"
                 f"<div style='width:{head_pct};background:{head_color};'></div>"
                 f"</div>"
                 f"<div style='display:flex;justify-content:space-between;"
                 f"font-size:11px;color:#64748b;margin-bottom:8px;'>"
-                f"<span>Delinquency <strong style='color:#1e293b;'>{delinq:.2%}</strong></span>"
+                f"<span>Delinquency <strong style='color:#0f172a;'>{delinq:.2%}</strong></span>"
                 f"<span>Limit <strong>{limit:.2%}</strong></span>"
                 f"</div>"
-                f"<div style='font-size:12px;color:#475569;'>"
-                f"Headroom: <strong style='color:{status_color};'>{headroom:.2%}</strong>"
-                f"&nbsp;·&nbsp; {loans:,} loans"
-                f"&nbsp;·&nbsp; Util: <strong>{util:.1%}</strong>"
+                f"<div style='font-size:12px;color:{status_color};font-weight:600;'>"
+                f"Headroom: {headroom:.2%}"
+                f"<span style='color:#8898aa;font-weight:400;'>"
+                f"&nbsp;·&nbsp;{loans:,} loans&nbsp;·&nbsp;Util {util:.1%}</span>"
                 f"</div>"
                 f"</div>"
             )

@@ -50,9 +50,17 @@ st.markdown(
     /* ── 3. Canvas ── */
     .main { background: #f0f4f8 !important; }
     .main .block-container {
-        padding-top: 1.5rem !important;
+        padding-top: 0.5rem !important;
         padding-bottom: 3.5rem !important;
         max-width: 1380px !important;
+        /* Must be visible so child position:sticky works */
+        overflow: visible !important;
+    }
+    /* Allow sticky children to escape their stacking context */
+    section[data-testid="stMain"],
+    section[data-testid="stMainBlockContainer"],
+    [data-testid="stAppViewContainer"] > section {
+        overflow: visible !important;
     }
 
     /* ── 4. Metric cards — left-accent rule (Bloomberg/Stripe pattern) ── */
@@ -447,57 +455,63 @@ def _health_strip() -> None:
         if recon is not None and not recon.empty else None
     )
 
-    # Build covenant chip
+    # ── Covenant chip ──────────────────────────────────────────────────────────
     if n_breach == 0:
-        cov_bg, cov_fg, cov_txt = "#f0fdf4", "#15803d", "✓ All covenants OK"
-        cov_nav = "spv"
+        cov_dot = "#10b981"
+        cov_chip_css = "background:rgba(16,185,129,.15);color:#6ee7b7"
+        cov_txt = "All covenants OK"
     else:
         names = ", ".join(breaches["spv_id"].tolist())
-        cov_bg, cov_fg, cov_txt = "#fee2e2", "#b91c1c", f"⚠ {names} in breach"
-        cov_nav = "spv"
+        cov_dot = "#ef4444"
+        cov_chip_css = "background:rgba(239,68,68,.18);color:#fca5a5"
+        cov_txt = f"{names} in breach"
 
-    # Recon chip
+    # ── Recon chip ─────────────────────────────────────────────────────────────
     if recon_pass is True:
-        rec_bg, rec_fg, rec_txt = "#f0fdf4", "#15803d", "✓ Recon PASS"
+        rec_dot, rec_chip_css, rec_txt = "#10b981", "background:rgba(16,185,129,.15);color:#6ee7b7", "Recon PASS"
     elif recon_pass is False:
-        rec_bg, rec_fg, rec_txt = "#fee2e2", "#b91c1c", "✗ Recon FAIL"
+        rec_dot, rec_chip_css, rec_txt = "#ef4444", "background:rgba(239,68,68,.18);color:#fca5a5", "Recon FAIL"
     else:
-        rec_bg, rec_fg, rec_txt = "#f1f5f9", "#64748b", "Recon n/a"
+        rec_dot, rec_chip_css, rec_txt = "#64748b", "background:rgba(100,116,139,.15);color:#94a3b8", "Recon n/a"
 
-    chip = (
-        "background:{bg};color:{fg};font-size:11px;font-weight:600;"
-        "padding:3px 10px;border-radius:20px;white-space:nowrap;"
-        "font-family:Inter,sans-serif;"
+    num_chip_css = "background:rgba(37,99,235,.18);color:#93c5fd"
+    dem_chip_css = "background:rgba(100,116,139,.12);color:#475569"
+    _b = (  # base pill style
+        "display:inline-flex;align-items:center;gap:6px;"
+        "font-size:11.5px;font-weight:600;padding:5px 12px;"
+        "border-radius:20px;white-space:nowrap;font-family:Inter,sans-serif;"
+        "letter-spacing:.01em;"
     )
 
-    # Chip colours tuned for the dark command-bar background
-    cov_chip  = f"background:{cov_bg};color:{cov_fg}"
-    rec_chip  = f"background:{rec_bg};color:{rec_fg}"
-    num_chip  = "background:rgba(37,99,235,.15);color:#93c5fd"
-    chip_base = (
-        "font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;"
-        "white-space:nowrap;font-family:Inter,sans-serif;letter-spacing:.01em;"
-    )
+    def _dot(color: str) -> str:
+        return (
+            f"<span style='width:6px;height:6px;border-radius:50%;"
+            f"background:{color};flex-shrink:0;display:inline-block;"
+            f"box-shadow:0 0 5px {color};'></span>"
+        )
+
     st.html(
+        # Sticky wrapper — stays pinned at top of main content as user scrolls
         "<div style='"
-        "background:linear-gradient(135deg,#0c1a30,#111f3a);"
-        "border:1px solid rgba(99,130,200,.14);"
-        "border-radius:14px;"
-        "padding:10px 18px;"
-        "margin-bottom:18px;"
-        "display:flex;gap:8px;align-items:center;flex-wrap:wrap;"
-        "box-shadow:0 2px 12px rgba(8,15,35,.15);"
+        "position:sticky;top:0;z-index:999;"
+        "background:linear-gradient(135deg,#0a1628dd,#0f1f3add);"
+        "backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);"
+        "border-bottom:1px solid rgba(99,130,200,.14);"
+        "padding:8px 4px 10px;"
+        "margin-bottom:16px;"
+        "display:flex;gap:6px;align-items:center;flex-wrap:wrap;"
         "font-family:Inter,sans-serif;'>"
-        # Demo label
-        "<span style='font-size:10px;font-weight:600;color:#2a3f5f;"
-        "letter-spacing:.08em;text-transform:uppercase;padding-right:4px;'>"
-        "Demo</span>"
-        "<span style='color:#1e2d45;font-size:12px;margin:0 2px;'>·</span>"
-        # Status chips
-        f"<span style='{chip_base}{cov_chip}'>{cov_txt}</span>"
-        f"<span style='{chip_base}{num_chip}'>Delinq {delinq:.2f}%</span>"
-        f"<span style='{chip_base}{num_chip}'>Default {default:.2f}%</span>"
-        f"<span style='{chip_base}{rec_chip}'>{rec_txt}</span>"
+        # Demo badge — neutral grey
+        f"<span style='{_b}{dem_chip_css}'>"
+        f"{_dot('#475569')}Demo · Synthetic data</span>"
+        # Covenant
+        f"<span style='{_b}{cov_chip_css}'>{_dot(cov_dot)}{cov_txt}</span>"
+        # Delinquency
+        f"<span style='{_b}{num_chip_css}'>{_dot('#60a5fa')}Delinquency {delinq:.2f}%</span>"
+        # Default
+        f"<span style='{_b}{num_chip_css}'>{_dot('#60a5fa')}Default {default:.2f}%</span>"
+        # Recon
+        f"<span style='{_b}{rec_chip_css}'>{_dot(rec_dot)}{rec_txt}</span>"
         "</div>"
     )
 

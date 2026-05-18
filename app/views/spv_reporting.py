@@ -52,46 +52,66 @@ def _detail_card(row: pd.Series) -> None:
     loans    = int(row.get("loan_count",                     0))
 
     border_c  = BRAND_COLORS["danger"] if breach else "#e2e8f0"
+    border_w  = "2px" if breach else "1px"
+    # Faint tinted background — readable at a glance without reading text
+    card_bg   = "rgba(239,68,68,0.04)" if breach else "#ffffff"
     status_c  = BRAND_COLORS["danger"] if breach else BRAND_COLORS["positive"]
     status_lbl= "⚠ BREACH" if breach else "✓ OK"
     used_pct  = min(delinq / limit, 1.0) * 100
     head_pct  = min(headroom / limit, 1.0) * 100
-    bar_used  = "#fca5a5" if breach else "#93c5fd"
+    # Covenant bar fill color by headroom
+    if breach:
+        bar_used = "#ef4444"
+    elif headroom < 0.02:
+        bar_used = "#f59e0b"   # amber: within 2pp of limit
+    else:
+        bar_used = "#2563eb"
     bar_head  = "#fecaca" if breach else "#bbf7d0"
-    val_color = "#dc2626" if breach else "#0f172a"
+    val_color = "#dc2626" if breach else "#060d1f"
+    # Utilization alert — flag >100% in red
+    util_color = "#ef4444" if util > 1.0 else "#060d1f"
+    util_str  = f"<strong style='color:{util_color};'>{util:.1%}</strong>"
 
     metrics_html = (
-        f"<div style='display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:16px;'>"
+        f"<div style='display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-top:16px;'>"
         + _metric_row("Loan Count",      f"{loans:,}")
         + _metric_row("Total Principal", f"${principal:,.0f}")
         + _metric_row("Facility Limit",  f"${fac_lim:,.0f}")
-        + _metric_row("Utilization",     f"{util:.1%}")
+        + _metric_row("Utilization",     util_str)
         + _metric_row("Default Rate",    f"{default:.2%}")
         + _metric_row("Avg UW Score",    f"{uw_score:.1f} / 100")
         + "</div>"
     )
 
     st.html(
-        f"<div style='border:2px solid {border_c};border-radius:14px;"
-        f"padding:20px 22px;background:#fff;font-family:Inter,sans-serif;'>"
+        f"<div style='border:{border_w} solid {border_c};border-left:4px solid {status_c};"
+        f"border-radius:14px;padding:20px 22px;background:{card_bg};"
+        f"font-family:Inter,sans-serif;box-shadow:0 1px 4px rgba(15,23,42,.05);'>"
         f"<div style='display:flex;justify-content:space-between;"
         f"align-items:flex-start;margin-bottom:4px;'>"
-        f"<div style='font-size:20px;font-weight:800;color:#1e293b;'>{row['spv_id']}</div>"
-        f"<span style='font-size:11px;font-weight:700;color:{status_c};margin-top:4px;'>{status_lbl}</span>"
+        f"<div style='font-size:20px;font-weight:800;color:#0f172a;'>{row['spv_id']}</div>"
+        f"<span style='font-size:11px;font-weight:700;color:{status_c};margin-top:4px;"
+        f"background:{'rgba(239,68,68,.1)' if breach else 'rgba(16,185,129,.1)'};"
+        f"padding:2px 10px;border-radius:12px;'>{status_lbl}</span>"
         f"</div>"
         f"<div style='font-size:12px;color:#94a3b8;margin-bottom:14px;'>{row.get('facility_name','')}</div>"
-        f"<div style='font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;"
-        f"letter-spacing:.07em;margin-bottom:5px;'>Delinquency Covenant</div>"
-        f"<div style='display:flex;height:8px;border-radius:4px;"
-        f"overflow:hidden;background:#f1f5f9;margin-bottom:5px;'>"
-        f"<div style='width:{used_pct:.1f}%;background:{bar_used};'></div>"
-        f"<div style='width:{head_pct:.1f}%;background:{bar_head};'></div>"
+        # Bar label row
+        f"<div style='display:flex;justify-content:space-between;font-size:10.5px;"
+        f"font-weight:600;color:#8898aa;margin-bottom:5px;'>"
+        f"<span>DELINQUENCY COVENANT</span>"
+        f"<span>Actual <strong style='color:{val_color}'>{delinq:.2%}</strong>"
+        f" / Limit <strong>{limit:.2%}</strong></span>"
         f"</div>"
-        f"<div style='display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:0;'>"
-        f"<span>Actual <strong style='color:{val_color}'>{delinq:.2%}</strong></span>"
-        f"<span>Headroom <strong style='color:{status_c}'>{headroom:.2%}</strong></span>"
-        f"<span>Limit <strong>{limit:.2%}</strong></span>"
+        # Taller covenant bar (12px)
+        f"<div style='position:relative;height:12px;border-radius:6px;"
+        f"overflow:hidden;background:#f0f4f8;margin-bottom:8px;'>"
+        f"<div style='width:{used_pct:.1f}%;height:100%;background:{bar_used};"
+        f"border-radius:6px 0 0 6px;transition:width .3s;'></div>"
+        f"<div style='position:absolute;top:0;left:{used_pct:.1f}%;width:{head_pct:.1f}%;"
+        f"height:100%;background:{bar_head};'></div>"
         f"</div>"
+        f"<div style='font-size:11px;color:{status_c};font-weight:600;margin-bottom:0;'>"
+        f"Headroom: {headroom:.2%}</div>"
         f"{metrics_html}"
         f"</div>"
     )

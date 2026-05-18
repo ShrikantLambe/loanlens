@@ -52,27 +52,64 @@ def render() -> None:
     all_pass  = all(r == "PASS" for r in recon["reconciliation_status"])
     fail_count = sum(1 for r in recon["reconciliation_status"] if r == "FAIL")
 
-    # 1. LARGE STATUS HEADLINE
+    # ── 1. SVG STATUS PANEL ──────────────────────────────────────────────────
     if all_pass:
-        st.html(
-            f"<div style='text-align:center;padding:28px 0 20px;font-family:Inter,sans-serif;'>"
-            f"<div style='font-size:48px;'>✅</div>"
-            f"<div style='font-size:22px;font-weight:800;color:#15803d;margin-top:8px;'>ALL METRICS RECONCILED</div>"
-            f"<div style='font-size:14px;color:#64748b;margin-top:4px;'>Warehouse matches source system across all {len(recon)} checks</div>"
-            f"</div>"
+        _icon_bg   = "linear-gradient(135deg,#059669,#10b981)"
+        _icon_svg  = (
+            "<svg width='30' height='30' viewBox='0 0 24 24' fill='none' "
+            "stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'>"
+            "<polyline points='20 6 9 17 4 12'/>"
+            "</svg>"
         )
+        _panel_bg  = "#f0fdf4"
+        _panel_bdr = "#bbf7d0"
+        _heading   = "ALL METRICS RECONCILED"
+        _subtext   = f"Warehouse matches source system across all {len(recon)} checks"
+        _pill_bg, _pill_fg = "#dcfce7", "#15803d"
+        _pill_txt  = f"{len(recon)} CHECKS PASSED"
+        _heading_c = "#065f46"
     else:
-        st.html(
-            f"<div style='text-align:center;padding:28px 0 20px;font-family:Inter,sans-serif;'>"
-            f"<div style='font-size:48px;'>❌</div>"
-            f"<div style='font-size:22px;font-weight:800;color:#b91c1c;margin-top:8px;'>RECONCILIATION FAILURE</div>"
-            f"<div style='font-size:14px;color:#64748b;margin-top:4px;'>{fail_count} of {len(recon)} metrics exceed the 0.1% tolerance threshold</div>"
-            f"</div>"
+        _icon_bg   = "linear-gradient(135deg,#b91c1c,#ef4444)"
+        _icon_svg  = (
+            "<svg width='30' height='30' viewBox='0 0 24 24' fill='none' "
+            "stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'>"
+            "<circle cx='12' cy='12' r='10'/>"
+            "<line x1='15' y1='9' x2='9' y2='15'/>"
+            "<line x1='9' y1='9' x2='15' y2='15'/>"
+            "</svg>"
         )
+        _panel_bg  = "#fff1f2"
+        _panel_bdr = "#fca5a5"
+        _heading   = "RECONCILIATION FAILURE"
+        _subtext   = f"{fail_count} of {len(recon)} metrics exceed the 0.1% tolerance threshold"
+        _pill_bg, _pill_fg = "#fee2e2", "#991b1b"
+        _pill_txt  = f"{fail_count} CHECK{'S' if fail_count != 1 else ''} FAILED"
+        _heading_c = "#991b1b"
 
-    # Freshness badge + simulated rerun
+    st.html(
+        f"<div style='background:{_panel_bg};border:1px solid {_panel_bdr};"
+        f"border-radius:16px;padding:32px 24px;text-align:center;"
+        f"font-family:Inter,sans-serif;margin-bottom:4px;'>"
+        # Icon disc
+        f"<div style='width:60px;height:60px;border-radius:50%;"
+        f"background:{_icon_bg};"
+        f"display:flex;align-items:center;justify-content:center;"
+        f"margin:0 auto 16px;box-shadow:0 4px 16px rgba(0,0,0,.12);'>"
+        f"{_icon_svg}</div>"
+        # Heading
+        f"<div style='font-size:22px;font-weight:800;color:{_heading_c};"
+        f"letter-spacing:-.02em;margin-bottom:6px;'>{_heading}</div>"
+        # Sub-text
+        f"<div style='font-size:13.5px;color:#6b7280;margin-bottom:14px;'>{_subtext}</div>"
+        # Status pill
+        f"<span style='display:inline-block;background:{_pill_bg};color:{_pill_fg};"
+        f"font-size:11px;font-weight:700;padding:4px 16px;border-radius:20px;"
+        f"letter-spacing:.07em;'>{_pill_txt}</span>"
+        f"</div>"
+    )
+
+    # ── 2. FRESHNESS BADGE + RERUN — one aligned row ─────────────────────────
     recon_ts = str(recon.get("reconciled_at", pd.Series([None])).iloc[0])[:19]
-    # Use session_state override if user pressed "Rerun" in this session
     if "recon_rerun_time" in st.session_state:
         recon_ts = st.session_state["recon_rerun_time"]
 
@@ -80,24 +117,31 @@ def render() -> None:
         recon_dt    = pd.to_datetime(recon_ts)
         hours_since = (pd.Timestamp.now() - recon_dt).total_seconds() / 3600
         if hours_since < 24:
-            badge_txt   = f"🟢 Fresh · {int(hours_since)}h ago"
-            badge_bg, badge_fg = "#f0fdf4", "#15803d"
+            dot_c     = "#10b981"
+            badge_txt = f"Fresh · {int(hours_since)}h ago"
+            badge_bg, badge_fg = "rgba(16,185,129,.12)", "#059669"
         elif hours_since < 168:
-            badge_txt   = f"🟡 Stale · {int(hours_since/24)}d ago — Rerun recommended"
-            badge_bg, badge_fg = "#fef9c3", "#b45309"
+            dot_c     = "#f59e0b"
+            badge_txt = f"Stale · {int(hours_since/24)}d ago — Rerun recommended"
+            badge_bg, badge_fg = "rgba(245,158,11,.12)", "#b45309"
         else:
-            badge_txt   = f"🔴 Stale · {int(hours_since/24)}d ago — Rerun required"
-            badge_bg, badge_fg = "#fee2e2", "#b91c1c"
+            dot_c     = "#ef4444"
+            badge_txt = f"Stale · {int(hours_since/24)}d ago — Rerun required"
+            badge_bg, badge_fg = "rgba(239,68,68,.12)", "#b91c1c"
     except Exception:
-        badge_txt   = f"Last reconciled: {recon_ts}"
+        dot_c     = "#94a3b8"
+        badge_txt = f"Last reconciled: {recon_ts}"
         badge_bg, badge_fg = "#f1f5f9", "#64748b"
 
-    col_ts, col_btn = st.columns([4, 1])
-    with col_ts:
+    col_badge, col_btn = st.columns([5, 1])
+    with col_badge:
         st.html(
-            f"<span style='background:{badge_bg};color:{badge_fg};"
-            f"padding:4px 12px;border-radius:20px;font-size:12px;"
-            f"font-weight:600;font-family:Inter,sans-serif;'>{badge_txt}</span>"
+            f"<div style='display:flex;align-items:center;gap:7px;padding:8px 0;'>"
+            f"<span style='width:7px;height:7px;border-radius:50%;"
+            f"background:{dot_c};box-shadow:0 0 6px {dot_c};flex-shrink:0;'></span>"
+            f"<span style='font-size:12.5px;font-weight:600;color:{badge_fg};"
+            f"font-family:Inter,sans-serif;'>{badge_txt}</span>"
+            f"</div>"
         )
     with col_btn:
         if st.button("↻ Rerun", use_container_width=True, help="Simulate a pipeline re-run"):
