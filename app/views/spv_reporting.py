@@ -16,6 +16,7 @@ from app.utils import snowflake_conn as db
 from app.utils.chart_helpers import BRAND_COLORS
 from app.utils import echarts as ec
 from app.utils.ui import page_header, section_header
+from streamlit_echarts import st_echarts
 
 
 @st.cache_data(ttl=300)
@@ -159,20 +160,42 @@ def render() -> None:
 
     st.divider()
 
-    # 2. COMPARISON CHART — ECharts grouped bar
+    # 2. COMPARISON CHART — ECharts grouped bar with click cross-filter
     section_header(
         "Delinquency Rate vs. Covenant Limit",
-        "Blue = within limit · Amber = within 2pp · Red = breach · Grey = covenant ceiling",
+        "Click a bar to highlight that facility below · Blue = OK · Amber = near limit · Red = breach",
     )
-    ec.render(ec.spv_bar_option(spv), height="340px", key="spv_comparison")
+    clicked = st_echarts(
+        options=ec._deep_merge(ec.BASE_OPTION, ec.spv_bar_option(spv)),
+        height="340px",
+        key="spv_comparison",
+        events={"click": "function(params){return params.name}"},
+    )
+    if clicked and clicked in spv["spv_id"].values:
+        st.session_state["spv_focus"] = clicked
+    elif "spv_focus" not in st.session_state:
+        st.session_state["spv_focus"] = None
 
     st.divider()
 
     # 3. DETAIL CARDS — with ECharts gauge replacing the flat progress bar
-    section_header("Facility Detail")
+    focus = st.session_state.get("spv_focus")
+    section_header(
+        "Facility Detail",
+        f"Highlighting: {focus}" if focus else "Click a bar above to focus a facility",
+    )
     cols = st.columns(len(spv))
     for col, (_, row) in zip(cols, spv.sort_values("spv_id").iterrows()):
+        is_focused = focus is not None and row["spv_id"] == focus
         with col:
+            if is_focused:
+                st.html(
+                    "<div style='background:#eff6ff;border:2px solid #2563eb;"
+                    "border-radius:14px;padding:6px 12px;margin-bottom:6px;"
+                    "font-size:11px;font-weight:700;color:#2563eb;"
+                    "font-family:Inter,sans-serif;text-align:center;"
+                    "letter-spacing:.06em;'>▶ SELECTED</div>"
+                )
             _detail_card(row)
             # Covenant gauge below the card (same column)
             ec.render(

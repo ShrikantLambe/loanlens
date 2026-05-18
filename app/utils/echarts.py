@@ -97,10 +97,27 @@ BASE_OPTION: dict = {
                 "title": "Save PNG",
                 "pixelRatio": 2,
                 "iconStyle": {"borderColor": "#8898aa"},
-            }
+            },
+            "dataView": {
+                "title": "Data",
+                "readOnly": True,
+                "lang": ["Data", "Close", "Refresh"],
+                "textareaColor": "#f8fafc",
+                "textColor": "#3d4f63",
+                "buttonColor": "#2563eb",
+            },
+            "restore": {"title": "Reset"},
+            "magicType": {
+                "type": ["line", "bar"],
+                "title": {"line": "Switch to Line", "bar": "Switch to Bar"},
+            },
         },
-        "right": 8,
+        "itemSize": 13,
+        "itemGap": 8,
+        "right": 12,
         "top": 4,
+        "iconStyle": {"borderColor": "#c8d4e4"},
+        "emphasis": {"iconStyle": {"borderColor": "#2563eb"}},
     },
 }
 

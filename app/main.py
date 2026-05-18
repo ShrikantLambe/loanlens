@@ -311,7 +311,7 @@ st.markdown(
         margin-top: 0 !important;
     }
 
-    /* ── 18. Tab bar (if used) ── */
+    /* ── 18. Tab bar ── */
     [data-testid="stTabs"] [role="tablist"] {
         border-bottom: 2px solid #e4e9f0 !important;
     }
@@ -319,6 +319,42 @@ st.markdown(
         color: #2563eb !important;
         border-bottom: 2px solid #2563eb !important;
         font-weight: 600 !important;
+    }
+
+    /* ── 19. KPI card + sparkline unification ─────────────────────────────────
+       st.metric() (card top) + st_echarts sparkline (card bottom) sit in the
+       same column but are separate Streamlit elements. These rules use :has()
+       to stitch them into one visual block with no gap.
+    ── */
+
+    /* Remove left-accent on metric cards inside columns (sparkline provides color accent) */
+    div[data-testid="column"] div[data-testid="stMetric"] {
+        border-left: 1px solid #e4e9f0 !important;
+        border-radius: 14px 14px 0 0 !important;
+        border-bottom: 0 !important;
+        padding-bottom: 6px !important;
+        margin-bottom: 0 !important;
+    }
+    /* Zero the gap between the two element-containers */
+    div[data-testid="column"] .element-container:has(div[data-testid="stMetric"]) {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    div[data-testid="column"] .element-container:has(div[data-testid="stMetric"]) + .element-container {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    /* The ECharts sparkline iframe = bottom half of the KPI card */
+    div[data-testid="column"] .element-container:has(div[data-testid="stMetric"]) + .element-container iframe {
+        border: 1px solid #e4e9f0 !important;
+        border-top: 0 !important;
+        border-radius: 0 0 14px 14px !important;
+        background: #ffffff !important;
+        display: block !important;
+    }
+    /* ECharts toolbox icons: show at right of chart title */
+    [data-testid="stCustomComponentV1"] {
+        border-radius: 16px !important;
     }
     </style>
     """,

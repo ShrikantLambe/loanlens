@@ -203,18 +203,29 @@ def render() -> None:
 
     st.divider()
 
-    # ── 3. DELINQUENCY TREND ──────────────────────────────────────────────────
+    # ── 3. CHARTS — side-by-side 2-column grid (like the ECharts gallery reference) ──
     min_covenant = float(spv["covenant_max_delinquency_pct"].min()) if not spv.empty else None
     last_year    = weekly[weekly["week_date"] >= weekly["week_date"].max() - pd.Timedelta(days=365)]
 
-    ec.render(
-        ec.delinquency_trend_option(last_year, covenant_limit=min_covenant),
-        height="420px", key="trend_delinq",
-    )
-    ec.render(
-        ec.origination_volume_option(originations),
-        height="420px", key="chart_originations",
-    )
+    ch_left, ch_right = st.columns(2)
+    with ch_left:
+        section_header(
+            "📉 Delinquency Trend",
+            "Rolling 12 months · 4-wk avg · Covenant limit marked",
+        )
+        ec.render(
+            ec.delinquency_trend_option(last_year, covenant_limit=min_covenant),
+            height="400px", key="trend_delinq",
+        )
+    with ch_right:
+        section_header(
+            "📦 Origination Volume",
+            "Stacked by platform · Loan count on secondary axis",
+        )
+        ec.render(
+            ec.origination_volume_option(originations),
+            height="400px", key="chart_originations",
+        )
 
     st.divider()
 
