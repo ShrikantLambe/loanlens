@@ -321,21 +321,18 @@ st.markdown(
         font-weight: 600 !important;
     }
 
-    /* ── 19. KPI card + sparkline unification ─────────────────────────────────
-       st.metric() (card top) + st_echarts sparkline (card bottom) sit in the
-       same column but are separate Streamlit elements. These rules use :has()
-       to stitch them into one visual block with no gap.
-    ── */
+    /* ── 19. KPI card + sparkline unification ── */
 
-    /* Remove left-accent on metric cards inside columns (sparkline provides color accent) */
+    /* Uniform left border (no colored accent) — sparkline provides the color signal */
     div[data-testid="column"] div[data-testid="stMetric"] {
         border-left: 1px solid #e4e9f0 !important;
         border-radius: 14px 14px 0 0 !important;
         border-bottom: 0 !important;
         padding-bottom: 6px !important;
         margin-bottom: 0 !important;
+        /* ── FIX 2: equal card height regardless of delta presence ── */
+        min-height: 108px !important;
     }
-    /* Zero the gap between the two element-containers */
     div[data-testid="column"] .element-container:has(div[data-testid="stMetric"]) {
         margin-bottom: 0 !important;
         padding-bottom: 0 !important;
@@ -344,7 +341,6 @@ st.markdown(
         margin-top: 0 !important;
         padding-top: 0 !important;
     }
-    /* The ECharts sparkline iframe = bottom half of the KPI card */
     div[data-testid="column"] .element-container:has(div[data-testid="stMetric"]) + .element-container iframe {
         border: 1px solid #e4e9f0 !important;
         border-top: 0 !important;
@@ -352,9 +348,15 @@ st.markdown(
         background: #ffffff !important;
         display: block !important;
     }
-    /* ECharts toolbox icons: show at right of chart title */
-    [data-testid="stCustomComponentV1"] {
-        border-radius: 16px !important;
+
+    /* ── 20. ECharts component container ── */
+    [data-testid="stCustomComponentV1"] { border-radius: 16px !important; }
+
+    /* ── FIX 1: Nav alignment — active item dot shifts text; match inactive indent ──
+       Remove the visual offset caused by the 5px dot + 10px margin in the active pill.
+       Both active and inactive items now start label text at the same x position.    */
+    section[data-testid="stSidebar"] .stButton > button {
+        padding: 9px 12px 9px 14px !important;
     }
     </style>
     """,
@@ -419,18 +421,16 @@ with st.sidebar:
         display_label = f"{icon}&nbsp;&nbsp;{label}{ai_badge}"
 
         if current == key:
+            # Active pill — padding:9px 12px 9px 14px matches inactive button padding
+            # No dot prefix so text aligns with inactive items
             st.html(
                 f"<div style='"
                 f"background:linear-gradient(135deg,rgba(37,99,235,.22),rgba(99,102,241,.14));"
                 f"border:1px solid rgba(99,130,245,.28);"
-                f"padding:10px 14px;border-radius:12px;color:#93c5fd;"
+                f"padding:9px 12px 9px 14px;border-radius:12px;color:#93c5fd;"
                 f"font-size:13px;font-weight:600;margin:2px 0;cursor:default;"
                 f"letter-spacing:.005em;font-family:Inter,sans-serif;"
-                f"box-shadow:0 2px 10px rgba(37,99,235,.12);"
-                f"display:flex;align-items:center;'>"
-                f"<span style='width:5px;height:5px;border-radius:50%;"
-                f"background:#60a5fa;margin-right:10px;flex-shrink:0;"
-                f"box-shadow:0 0 6px #60a5fa;display:inline-block;'></span>"
+                f"box-shadow:0 2px 10px rgba(37,99,235,.12);'>"
                 f"{display_label}</div>"
             )
         else:

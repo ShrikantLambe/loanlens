@@ -84,19 +84,23 @@ BASE_OPTION: dict = {
             "crossStyle": {"color": "#334155"},
         },
     },
+    # right: 52 clears the 2-icon toolbox (2×13 + 6 gap + 12 right = 44px) with buffer
     "legend": {
         "top": 8,
-        "right": 48,
+        "right": 52,
         "textStyle": {"color": "#5c6f85", "fontSize": 11},
         "itemHeight": 10,
+        "itemGap": 12,
     },
     "grid": {"left": 60, "right": 24, "top": 52, "bottom": 60, "containLabel": True},
+    # Toolbox: 2 icons only (save + dataView) so legend has room.
+    # 2 × 13px + 1 × 6px gap + 12px right = ~44px total occupied at right edge.
+    # Legend right is set to 52 below to stay clear.
     "toolbox": {
         "feature": {
             "saveAsImage": {
                 "title": "Save PNG",
                 "pixelRatio": 2,
-                "iconStyle": {"borderColor": "#8898aa"},
             },
             "dataView": {
                 "title": "Data",
@@ -106,16 +110,11 @@ BASE_OPTION: dict = {
                 "textColor": "#3d4f63",
                 "buttonColor": "#2563eb",
             },
-            "restore": {"title": "Reset"},
-            "magicType": {
-                "type": ["line", "bar"],
-                "title": {"line": "Switch to Line", "bar": "Switch to Bar"},
-            },
         },
         "itemSize": 13,
-        "itemGap": 8,
+        "itemGap": 6,
         "right": 12,
-        "top": 4,
+        "top": 6,
         "iconStyle": {"borderColor": "#c8d4e4"},
         "emphasis": {"iconStyle": {"borderColor": "#2563eb"}},
     },
@@ -213,10 +212,12 @@ def delinquency_trend_option(
                 "fontWeight": "600",
             },
         }
+        # Narrow band (3pp wide) above the covenant line — avoids flooding the chart
+        # red when the data line is already far above the limit.
         actual_series["markArea"] = {
             "silent": True,
-            "itemStyle": {"color": "rgba(239,68,68,0.07)"},
-            "data": [[{"yAxis": limit_pct}, {"yAxis": max(max_pct, limit_pct * 1.3)}]],
+            "itemStyle": {"color": "rgba(239,68,68,0.08)"},
+            "data": [[{"yAxis": limit_pct}, {"yAxis": limit_pct + 3.0}]],
         }
 
     return {
@@ -356,7 +357,17 @@ def origination_volume_option(df: pd.DataFrame) -> dict:
             "textStyle": {"fontSize": 15, "fontWeight": "700", "color": "#060d1f"},
         },
         "tooltip": {"trigger": "axis", "formatter": tooltip_fmt},
-        "legend": {"data": [p.title() for p in platforms] + ["Loan Count"]},
+        # 6 legend items (5 platforms + loan count) — move to bottom scrollable
+        # so they don't crowd the chart title on narrow 50% columns
+        "legend": {
+            "data": [p.title() for p in platforms] + ["Loan Count"],
+            "bottom": 28,
+            "type": "scroll",
+            "pageTextStyle": {"color": "#8898aa", "fontSize": 10},
+            "textStyle": {"color": "#5c6f85", "fontSize": 10},
+            "itemHeight": 9,
+            "itemGap": 8,
+        },
         "xAxis": {
             "type": "category",
             "data": months,
@@ -390,13 +401,13 @@ def origination_volume_option(df: pd.DataFrame) -> dict:
             {
                 "type": "slider",
                 "start": 0, "end": 100,
-                "bottom": 4, "height": 20,
+                "bottom": 4, "height": 18,
                 "borderColor": "#e4e9f0",
                 "fillerColor": "rgba(37,99,235,0.1)",
                 "textStyle": {"color": "#8898aa", "fontSize": 10},
             },
         ],
-        "grid": {"left": 70, "right": 70, "top": 60, "bottom": 56, "containLabel": False},
+        "grid": {"left": 70, "right": 70, "top": 44, "bottom": 72, "containLabel": False},
     }
 
 
