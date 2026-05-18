@@ -13,7 +13,8 @@ import pandas as pd
 import streamlit as st
 
 from app.utils import snowflake_conn as db
-from app.utils.chart_helpers import spv_covenant_comparison_chart, BRAND_COLORS
+from app.utils.chart_helpers import BRAND_COLORS
+from app.utils import echarts as ec
 from app.utils.ui import page_header, section_header
 
 
@@ -158,21 +159,30 @@ def render() -> None:
 
     st.divider()
 
-    # 2. COMPARISON CHART — all SPVs in one view
+    # 2. COMPARISON CHART — ECharts grouped bar
     section_header(
         "Delinquency Rate vs. Covenant Limit",
-        "Blue = within limit · Red = breach · Grey = covenant ceiling · Gap = operating headroom",
+        "Blue = within limit · Amber = within 2pp · Red = breach · Grey = covenant ceiling",
     )
-    st.plotly_chart(spv_covenant_comparison_chart(spv), use_container_width=True)
+    ec.render(ec.spv_bar_option(spv), height="340px", key="spv_comparison")
 
     st.divider()
 
-    # 3. DETAIL CARDS
+    # 3. DETAIL CARDS — with ECharts gauge replacing the flat progress bar
     section_header("Facility Detail")
     cols = st.columns(len(spv))
     for col, (_, row) in zip(cols, spv.sort_values("spv_id").iterrows()):
         with col:
             _detail_card(row)
+            # Covenant gauge below the card (same column)
+            ec.render(
+                ec.covenant_gauge_option(
+                    actual=float(row.get("delinquency_rate", 0)),
+                    limit=float(row.get("covenant_max_delinquency_pct", 0.08)),
+                ),
+                height="180px",
+                key=f"gauge_{row['spv_id']}",
+            )
 
     st.divider()
 

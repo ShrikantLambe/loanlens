@@ -14,11 +14,7 @@ import pandas as pd
 import streamlit as st
 
 from app.utils import snowflake_conn as db
-from app.utils.chart_helpers import (
-    cohort_heatmap,
-    cohort_default_ranking_chart,
-    repayment_curves_chart,
-)
+from app.utils import echarts as ec
 from app.utils.ui import page_header, section_header
 
 
@@ -138,15 +134,12 @@ def render() -> None:
             label_visibility="collapsed",
         ) if not show_all else None
 
-    _ranking_df = df if show_all else df.copy()
-    if not show_all and top_n is not None:
-        # Keep only the top-N worst cohorts by peak default rate
-        _worst_labels = (
-            summary.nlargest(top_n, "final_default_rate")["cohort_label"].tolist()
-        )
-        _ranking_df = df[df["cohort_label"].isin(_worst_labels)]
-
-    st.plotly_chart(cohort_default_ranking_chart(_ranking_df), use_container_width=True)
+    _top_n_arg = None if show_all else top_n
+    ec.render(
+        ec.cohort_ranking_option(df, top_n=_top_n_arg),
+        height="480px",
+        key="cohort_ranking",
+    )
 
     st.divider()
 
@@ -155,7 +148,7 @@ def render() -> None:
         "Vintage Heatmap — Default Rate Over Loan Life",
         "Each row = origination cohort · Each column = months since funding · Darker = higher defaults",
     )
-    st.plotly_chart(cohort_heatmap(df), use_container_width=True)
+    ec.render(ec.cohort_heatmap_option(df), height="520px", key="cohort_heatmap")
 
     st.divider()
 
@@ -176,7 +169,7 @@ def render() -> None:
     )
 
     if selected:
-        st.plotly_chart(repayment_curves_chart(df, selected), use_container_width=True)
+        ec.render(ec.repayment_curves_option(df, selected), height="400px", key="repayment_curves")
     else:
         st.info("Select at least one cohort above.")
 

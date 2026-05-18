@@ -14,11 +14,8 @@ import pandas as pd
 import streamlit as st
 
 from app.utils import snowflake_conn as db
-from app.utils.chart_helpers import (
-    BRAND_COLORS,
-    delinquency_trend_chart,
-    origination_volume_chart,
-)
+from app.utils.chart_helpers import BRAND_COLORS
+from app.utils import echarts as ec
 from app.utils.ui import page_header, section_header
 
 
@@ -152,73 +149,71 @@ def render() -> None:
     _status_banner(spv, current_delinq)
     st.divider()
 
-    # 2. KPI ROW — from rpt_portfolio_summary (authoritative single number per metric)
-    c1, c2, c3, c4 = st.columns(4)
+    # ── 2. KPI ROW with sparklines ────────────────────────────────────────────
+    # Sparkline history: last 16 weeks of weekly data
+    spark_weeks = weekly.sort_values("week_date").tail(16)
+    delinq_hist  = (spark_weeks["delinquency_rate"] * 100).tolist()
+    default_hist = (spark_weeks["default_rate"] * 100).tolist()
+    # Outstanding principal history (normalised to 0-100 for sparkline shape)
+    principal_hist = spark_weeks["outstanding_principal"].tolist()
 
+    delinq_pct   = float(row.get("delinquency_rate_pct", 0))
+    default_pct  = float(row.get("default_rate_pct",     0))
+    total_orig   = float(row.get("total_originated",     0))
+    outstanding  = float(row.get("outstanding_principal",0))
+    delinq_delta = _delta("delinquency_rate")
+    default_delta= _delta("default_rate")
+
+    _d_label = (
+        f"{delinq_delta*100:+.2f}pp (30d)"
+        if delinq_delta is not None and abs(delinq_delta) > 0.0001 else None
+    )
+    _def_label = (
+        f"{default_delta*100:+.2f}pp (30d)"
+        if default_delta is not None and abs(default_delta) > 0.0001 else None
+    )
+
+    # Semantic color: rising delinquency/default = red even if sign is "up"
+    delinq_color  = ec.PALETTE["danger"]  if delinq_pct  > 5 else ec.PALETTE["amber"] if delinq_pct > 2 else ec.PALETTE["success"]
+    default_color = ec.PALETTE["danger"]  if default_pct > 4 else ec.PALETTE["amber"] if default_pct > 2 else ec.PALETTE["success"]
+
+    c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric(
-            "Total Originated",
-            f"${float(row.get('total_originated', 0)):,.0f}",
-            help="Cumulative principal funded across all loans.",
-        )
+        st.metric("Total Originated",    f"${total_orig:,.0f}",
+                  help="Cumulative principal funded across all loans.")
+        ec.render(ec.kpi_sparkline_option(principal_hist, ec.PALETTE["primary"]),
+                  height="52px", key="spark_principal")
     with c2:
-        st.metric(
-            "Outstanding Principal",
-            f"${float(row.get('outstanding_principal', 0)):,.0f}",
-            help="Principal of loans not yet paid off.",
-        )
+        st.metric("Outstanding Principal", f"${outstanding:,.0f}",
+                  help="Principal of loans not yet paid off.")
+        ec.render(ec.kpi_sparkline_option(principal_hist, ec.PALETTE["purple"]),
+                  height="52px", key="spark_outstanding")
     with c3:
-        delinq_pct   = float(row.get("delinquency_rate_pct", 0))
-        delinq_delta = _delta("delinquency_rate")
-        _d_label = (
-            f"{delinq_delta*100:+.2f}pp (30d trend)"
-            if delinq_delta is not None and abs(delinq_delta) > 0.0001
-            else None
-        )
-        st.metric(
-            "Delinquency Rate",
-            f"{delinq_pct:.2f}%",
-            delta=_d_label,
-            delta_color="inverse",
-            help=(
-                "Current delinquency: % of outstanding principal 30+ DPD "
-                "(source: rpt_portfolio_summary). "
-                "Delta pp = 30-day change from fct_delinquency_weekly trend model."
-            ),
-        )
+        st.metric("Delinquency Rate", f"{delinq_pct:.2f}%",
+                  delta=_d_label, delta_color="inverse",
+                  help="% of outstanding principal 30+ DPD (rpt_portfolio_summary).")
+        ec.render(ec.kpi_sparkline_option(delinq_hist, delinq_color),
+                  height="52px", key="spark_delinq")
     with c4:
-        default_pct   = float(row.get("default_rate_pct", 0))
-        default_delta = _delta("default_rate")
-        _def_label = (
-            f"{default_delta*100:+.2f}pp (30d trend)"
-            if default_delta is not None and abs(default_delta) > 0.0001
-            else None
-        )
-        st.metric(
-            "Default Rate",
-            f"{default_pct:.2f}%",
-            delta=_def_label,
-            delta_color="inverse",
-            help=(
-                "Hard default: % of outstanding principal 90+ DPD "
-                "(source: rpt_portfolio_summary). "
-                "Delta pp = 30-day change from fct_delinquency_weekly trend model."
-            ),
-        )
+        st.metric("Default Rate", f"{default_pct:.2f}%",
+                  delta=_def_label, delta_color="inverse",
+                  help="% of outstanding principal 90+ DPD (rpt_portfolio_summary).")
+        ec.render(ec.kpi_sparkline_option(default_hist, default_color),
+                  height="52px", key="spark_default")
 
     st.divider()
 
-    # 3. DELINQUENCY TREND — uses fct_delinquency_weekly (event-date based, not static status)
+    # ── 3. DELINQUENCY TREND ──────────────────────────────────────────────────
     min_covenant = float(spv["covenant_max_delinquency_pct"].min()) if not spv.empty else None
     last_year    = weekly[weekly["week_date"] >= weekly["week_date"].max() - pd.Timedelta(days=365)]
 
-    st.plotly_chart(
-        delinquency_trend_chart(last_year, covenant_limit=min_covenant),
-        use_container_width=True,
+    ec.render(
+        ec.delinquency_trend_option(last_year, covenant_limit=min_covenant),
+        height="420px", key="trend_delinq",
     )
-    st.plotly_chart(
-        origination_volume_chart(originations),
-        use_container_width=True,
+    ec.render(
+        ec.origination_volume_option(originations),
+        height="420px", key="chart_originations",
     )
 
     st.divider()

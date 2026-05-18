@@ -12,6 +12,7 @@ import pandas as pd
 import streamlit as st
 
 from app.utils import snowflake_conn as db
+from app.utils import echarts as ec
 from app.utils.ui import page_header, section_header
 
 # Map snake_case metric names → business-friendly display names
@@ -86,27 +87,33 @@ def render() -> None:
         _pill_txt  = f"{fail_count} CHECK{'S' if fail_count != 1 else ''} FAILED"
         _heading_c = "#991b1b"
 
-    st.html(
-        f"<div style='background:{_panel_bg};border:1px solid {_panel_bdr};"
-        f"border-radius:16px;padding:32px 24px;text-align:center;"
-        f"font-family:Inter,sans-serif;margin-bottom:4px;'>"
-        # Icon disc
-        f"<div style='width:60px;height:60px;border-radius:50%;"
-        f"background:{_icon_bg};"
-        f"display:flex;align-items:center;justify-content:center;"
-        f"margin:0 auto 16px;box-shadow:0 4px 16px rgba(0,0,0,.12);'>"
-        f"{_icon_svg}</div>"
-        # Heading
-        f"<div style='font-size:22px;font-weight:800;color:{_heading_c};"
-        f"letter-spacing:-.02em;margin-bottom:6px;'>{_heading}</div>"
-        # Sub-text
-        f"<div style='font-size:13.5px;color:#6b7280;margin-bottom:14px;'>{_subtext}</div>"
-        # Status pill
-        f"<span style='display:inline-block;background:{_pill_bg};color:{_pill_fg};"
-        f"font-size:11px;font-weight:700;padding:4px 16px;border-radius:20px;"
-        f"letter-spacing:.07em;'>{_pill_txt}</span>"
-        f"</div>"
-    )
+    passed_count = sum(1 for r in recon["reconciliation_status"] if r == "PASS")
+    _col_ring, _col_panel = st.columns([1, 3])
+    with _col_ring:
+        ec.render(
+            ec.recon_ring_option(passed=passed_count, total=len(recon)),
+            height="200px",
+            key="recon_ring",
+        )
+    with _col_panel:
+        st.html(
+            f"<div style='background:{_panel_bg};border:1px solid {_panel_bdr};"
+            f"border-radius:16px;padding:28px 24px;text-align:center;"
+            f"font-family:Inter,sans-serif;height:200px;"
+            f"display:flex;flex-direction:column;align-items:center;justify-content:center;'>"
+            f"<div style='width:52px;height:52px;border-radius:50%;"
+            f"background:{_icon_bg};"
+            f"display:flex;align-items:center;justify-content:center;"
+            f"margin:0 auto 12px;box-shadow:0 4px 16px rgba(0,0,0,.12);'>"
+            f"{_icon_svg}</div>"
+            f"<div style='font-size:20px;font-weight:800;color:{_heading_c};"
+            f"letter-spacing:-.02em;margin-bottom:6px;'>{_heading}</div>"
+            f"<div style='font-size:13px;color:#6b7280;margin-bottom:12px;'>{_subtext}</div>"
+            f"<span style='display:inline-block;background:{_pill_bg};color:{_pill_fg};"
+            f"font-size:11px;font-weight:700;padding:4px 16px;border-radius:20px;"
+            f"letter-spacing:.07em;'>{_pill_txt}</span>"
+            f"</div>"
+        )
 
     # ── 2. FRESHNESS BADGE + RERUN — one aligned row ─────────────────────────
     recon_ts = str(recon.get("reconciled_at", pd.Series([None])).iloc[0])[:19]
