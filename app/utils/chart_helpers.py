@@ -9,12 +9,12 @@ import plotly.graph_objects as go
 
 
 BRAND_COLORS = {
-    "primary":      "#1e3a5f",
+    "primary":      "#060d1f",
     "accent":       "#2563eb",
-    "positive":     "#16a34a",
-    "warning":      "#d97706",
-    "danger":       "#dc2626",
-    "neutral":      "#6b7280",
+    "positive":     "#10b981",
+    "warning":      "#f59e0b",
+    "danger":       "#ef4444",
+    "neutral":      "#8898aa",
     "accent_light": "#dbeafe",
 }
 
@@ -27,10 +27,16 @@ PLATFORM_PALETTE = {
 }
 
 _LAYOUT = dict(
-    plot_bgcolor="white",
-    paper_bgcolor="white",
-    font=dict(family="Inter, system-ui, sans-serif", size=12, color="#1e293b"),
-    margin=dict(l=60, r=20, t=56, b=60),
+    plot_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="rgba(0,0,0,0)",
+    font=dict(family="Inter, system-ui, sans-serif", size=12, color="#3d4f63"),
+    margin=dict(l=56, r=24, t=56, b=56),
+    hoverlabel=dict(
+        bgcolor="#0f172a",
+        font_color="#f1f5f9",
+        font_size=12,
+        bordercolor="#1e293b",
+    ),
 )
 
 
@@ -91,8 +97,8 @@ def delinquency_trend_chart(
             text="Delinquency Rate — Rolling 12 Months",
             font=dict(size=15, weight=700),
         ),
-        yaxis=dict(tickformat=".1%", gridcolor="#f0f4f8", zeroline=False),
-        xaxis=dict(gridcolor="#f0f4f8", tickangle=-20),
+        yaxis=dict(tickformat=".1%", gridcolor="#eaeff5", zeroline=False),
+        xaxis=dict(gridcolor="#eaeff5", tickangle=-20),
         hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
@@ -150,7 +156,7 @@ def origination_volume_chart(df: pd.DataFrame) -> go.Figure:
         yaxis=dict(
             title="Volume ($)",
             tickprefix="$", tickformat=",.0f",
-            gridcolor="#f0f4f8", zeroline=False,
+            gridcolor="#eaeff5", zeroline=False,
         ),
         yaxis2=dict(
             title="Loan Count",
@@ -158,7 +164,7 @@ def origination_volume_chart(df: pd.DataFrame) -> go.Figure:
             showgrid=False, zeroline=False,
             tickformat=",",
         ),
-        xaxis=dict(tickangle=-20, gridcolor="#f0f4f8"),
+        xaxis=dict(tickangle=-20, gridcolor="#eaeff5"),
         hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
@@ -277,7 +283,7 @@ def cohort_default_ranking_chart(df: pd.DataFrame) -> go.Figure:
             text="Peak Default Rate by Cohort — Worst to Best",
             font=dict(size=15, weight=700),
         ),
-        xaxis=dict(tickformat=".1%", gridcolor="#f0f4f8", zeroline=False),
+        xaxis=dict(tickformat=".1%", gridcolor="#eaeff5", zeroline=False),
         yaxis=dict(tickfont=dict(size=10)),
         height=max(300, len(summary) * 24 + 100),
         showlegend=False,
@@ -322,12 +328,12 @@ def repayment_curves_chart(df: pd.DataFrame, cohorts: list[str]) -> go.Figure:
         title=dict(font=dict(size=15, weight=700)),
         yaxis=dict(
             tickformat=".0%",
-            gridcolor="#f0f4f8",
+            gridcolor="#eaeff5",
             range=[0, 1.15],
             zeroline=False,
             title="Repayment Progress (0% → 100% = fully paid)",
         ),
-        xaxis=dict(gridcolor="#f0f4f8"),
+        xaxis=dict(gridcolor="#eaeff5"),
         hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
@@ -401,7 +407,7 @@ def spv_covenant_comparison_chart(df: pd.DataFrame) -> go.Figure:
             font=dict(size=15, weight=700),
         ),
         barmode="group",
-        yaxis=dict(tickformat=".1%", gridcolor="#f0f4f8", zeroline=False),
+        yaxis=dict(tickformat=".1%", gridcolor="#eaeff5", zeroline=False),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         height=360,
     )
@@ -425,7 +431,7 @@ def spv_utilization_bar(spv_id: str, utilization: float, limit: float) -> go.Fig
     )
     fig.update_layout(
         title=dict(text=f"Utilization vs ${limit/1e6:.0f}M limit", font=dict(size=12)),
-        xaxis=dict(range=[0, 1], tickformat=".0%", gridcolor="#f0f4f8"),
+        xaxis=dict(range=[0, 1], tickformat=".0%", gridcolor="#eaeff5"),
         yaxis=dict(showticklabels=False),
         height=90,
         margin=dict(l=0, r=10, t=28, b=20),

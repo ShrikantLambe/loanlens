@@ -33,8 +33,8 @@ st.markdown(
 st.markdown(
     """
     <style>
-    /* ── 1. Typography: Inter from Google Fonts ── */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    /* ── 1. Fonts: Inter (UI) + JetBrains Mono (numbers) ── */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
     html, body, [class*="css"], .stMarkdown, .stText, button, input, select, textarea {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
@@ -44,114 +44,104 @@ st.markdown(
     #MainMenu { visibility: hidden; }
     footer    { visibility: hidden; }
     header    { visibility: hidden; }
-    .stDeployButton         { display: none !important; }
-    [data-testid="stToolbar"]{ display: none !important; }
+    .stDeployButton          { display: none !important; }
+    [data-testid="stToolbar"] { display: none !important; }
 
-    /* ── 3. Page background: very faint blue-gray ── */
-    .main { background: #f8fafc !important; }
+    /* ── 3. Canvas ── */
+    .main { background: #f0f4f8 !important; }
     .main .block-container {
-        padding-top: 2rem !important;
-        padding-bottom: 3rem !important;
-        max-width: 1320px !important;
+        padding-top: 1.5rem !important;
+        padding-bottom: 3.5rem !important;
+        max-width: 1380px !important;
     }
 
-    /* ── 4. Metric cards ── */
+    /* ── 4. Metric cards — left-accent rule (Bloomberg/Stripe pattern) ── */
     [data-testid="stMetric"] {
         background: #ffffff;
-        border-radius: 14px;
+        border-radius: 16px;
         padding: 20px 22px 18px !important;
-        box-shadow:
-            0 0 0 1px rgba(15,23,42,.06),
-            0 2px 8px rgba(15,23,42,.04);
+        border: 1px solid #e4e9f0;
+        border-left: 4px solid #2563eb;
+        box-shadow: 0 1px 4px rgba(15,23,42,.05);
         position: relative;
-        overflow: hidden;
-        transition: box-shadow .2s ease;
+        transition: box-shadow .18s ease, transform .18s ease;
     }
     [data-testid="stMetric"]:hover {
-        box-shadow:
-            0 0 0 1px rgba(37,99,235,.15),
-            0 4px 16px rgba(15,23,42,.08);
+        box-shadow: 0 6px 20px rgba(37,99,235,.10), 0 1px 4px rgba(15,23,42,.06);
+        transform: translateY(-2px);
     }
-    /* gradient accent stripe */
-    [data-testid="stMetric"]::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #2563eb 0%, #7c3aed 100%);
-    }
+    [data-testid="stMetric"]::before { display: none; }
     [data-testid="stMetricLabel"] > div {
-        font-size: 11px !important;
-        font-weight: 600 !important;
-        color: #94a3b8 !important;
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+        color: #8898aa !important;
         text-transform: uppercase !important;
-        letter-spacing: .07em !important;
+        letter-spacing: .09em !important;
     }
     [data-testid="stMetricValue"] > div {
-        font-size: 26px !important;
-        font-weight: 700 !important;
-        color: #0f172a !important;
-        letter-spacing: -.025em !important;
+        font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+        font-size: 28px !important;
+        font-weight: 600 !important;
+        color: #0a0f1e !important;
+        letter-spacing: -.03em !important;
         font-variant-numeric: tabular-nums !important;
-        line-height: 1.1 !important;
-        margin-top: 6px !important;
+        line-height: 1.15 !important;
+        margin-top: 8px !important;
     }
     [data-testid="stMetricDelta"] > div {
         font-size: 12px !important;
-        font-weight: 500 !important;
-        margin-top: 4px !important;
+        font-weight: 600 !important;
+        margin-top: 6px !important;
+        font-variant-numeric: tabular-nums !important;
     }
 
     /* ── 5. Typography scale ── */
     h1 {
         font-weight: 800 !important;
-        font-size: 26px !important;
-        color: #0f172a !important;
-        letter-spacing: -.03em !important;
-        line-height: 1.2 !important;
-        margin-bottom: 2px !important;
+        font-size: 28px !important;
+        color: #060d1f !important;
+        letter-spacing: -.04em !important;
+        line-height: 1.15 !important;
     }
     h2 {
         font-weight: 700 !important;
-        font-size: 16px !important;
+        font-size: 15px !important;
         color: #1e293b !important;
         letter-spacing: -.02em !important;
     }
     h3 {
         font-weight: 600 !important;
-        font-size: 14px !important;
+        font-size: 13.5px !important;
         color: #334155 !important;
     }
-    p { font-size: 14px !important; line-height: 1.65 !important; color: #374151 !important; }
+    p { font-size: 14px !important; line-height: 1.7 !important; color: #3d4f63 !important; }
 
     /* ── 6. Caption ── */
     [data-testid="stCaptionContainer"] p {
-        font-size: 13px !important;
+        font-size: 12.5px !important;
         color: #94a3b8 !important;
-        line-height: 1.5 !important;
+        line-height: 1.55 !important;
     }
 
     /* ── 7. Divider ── */
     hr {
         border: none !important;
-        border-top: 1px solid #f1f5f9 !important;
-        margin: 1.75rem 0 !important;
+        border-top: 1px solid #e8edf3 !important;
+        margin: 2rem 0 !important;
     }
 
-    /* ── 8. Sidebar: deep navy ── */
+    /* ── 8. Sidebar ── */
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0c1527 0%, #111827 100%) !important;
-        border-right: 1px solid rgba(255,255,255,.05) !important;
+        background: linear-gradient(175deg, #060d1f 0%, #0d1a30 60%, #0a1628 100%) !important;
+        border-right: 1px solid rgba(99,130,200,.1) !important;
     }
-    section[data-testid="stSidebar"] * { color: #94a3b8 !important; }
+    section[data-testid="stSidebar"] * { color: #7a8fa8 !important; }
     section[data-testid="stSidebar"] hr {
-        border-top: 1px solid rgba(255,255,255,.07) !important;
-        margin: .75rem 0 !important;
+        border-top: 1px solid rgba(255,255,255,.06) !important;
+        margin: .6rem 0 !important;
     }
-
-    /* ── Sidebar element spacing: flush all containers to zero margin ── */
     section[data-testid="stSidebar"] .element-container {
-        margin-bottom: 2px !important;
+        margin-bottom: 1px !important;
         margin-top: 0 !important;
     }
     section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {
@@ -159,33 +149,33 @@ st.markdown(
     }
     section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"],
     section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-        gap: 2px !important;
+        gap: 1px !important;
     }
 
-    /* Nav buttons in sidebar */
+    /* Sidebar nav buttons */
     section[data-testid="stSidebar"] .stButton > button {
         background: transparent !important;
         border: none !important;
         text-align: left !important;
         justify-content: flex-start !important;
-        color: #64748b !important;
-        font-size: 13.5px !important;
+        color: #556070 !important;
+        font-size: 13px !important;
         font-weight: 500 !important;
-        padding: 9px 14px !important;
-        border-radius: 8px !important;
+        padding: 9px 12px !important;
+        border-radius: 10px !important;
         height: auto !important;
-        min-height: 36px !important;
+        min-height: 38px !important;
         line-height: 1.4 !important;
         box-shadow: none !important;
         width: 100% !important;
-        letter-spacing: .01em !important;
-        transition: background .15s ease, color .15s ease !important;
+        letter-spacing: .005em !important;
+        transition: background .14s ease, color .14s ease !important;
         display: flex !important;
         align-items: center !important;
     }
     section[data-testid="stSidebar"] .stButton > button:hover {
-        background: rgba(255,255,255,.07) !important;
-        color: #e2e8f0 !important;
+        background: rgba(99,130,200,.1) !important;
+        color: #c8d8f0 !important;
         transform: none !important;
         box-shadow: none !important;
     }
@@ -194,101 +184,129 @@ st.markdown(
         box-shadow: none !important;
     }
 
-    /* ── 9. Primary button (outside sidebar) ── */
+    /* ── 9. Main-area buttons ── */
     .main .stButton > button[kind="primary"],
     .main .stButton > button[data-testid="baseButton-primary"] {
-        background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+        background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%) !important;
         border: none !important;
-        border-radius: 8px !important;
+        border-radius: 10px !important;
         font-weight: 600 !important;
         font-size: 13px !important;
-        letter-spacing: .01em !important;
+        letter-spacing: .02em !important;
         color: #fff !important;
-        box-shadow: 0 1px 3px rgba(37,99,235,.35) !important;
-        transition: all .15s ease !important;
-        height: 38px !important;
+        box-shadow: 0 2px 8px rgba(37,99,235,.3), 0 1px 2px rgba(37,99,235,.2) !important;
+        transition: all .16s ease !important;
+        height: 40px !important;
     }
     .main .stButton > button[kind="primary"]:hover {
-        background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
-        box-shadow: 0 4px 14px rgba(37,99,235,.4) !important;
+        background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%) !important;
+        box-shadow: 0 6px 20px rgba(37,99,235,.38) !important;
         transform: translateY(-1px) !important;
     }
     .main .stButton > button:not([kind="primary"]):not([disabled]) {
-        border-radius: 8px !important;
+        border-radius: 10px !important;
         font-weight: 500 !important;
         font-size: 13px !important;
-        transition: all .15s ease !important;
-        height: 38px !important;
+        transition: all .14s ease !important;
+        height: 40px !important;
+        border: 1px solid #d1d9e6 !important;
     }
 
-    /* ── 10. Alert / status boxes ── */
+    /* ── 10. Alerts ── */
     [data-testid="stAlert"] {
-        border-radius: 10px !important;
-        font-size: 14px !important;
+        border-radius: 12px !important;
+        font-size: 13.5px !important;
         font-weight: 500 !important;
-        padding: 12px 16px !important;
+        padding: 14px 18px !important;
+        border: none !important;
+    }
+    [data-testid="stAlert"][kind="success"],
+    [data-testid="stAlert"][data-baseweb="notification"][kind="positive"] {
+        background: #f0fdf4 !important;
+        border-left: 4px solid #10b981 !important;
+    }
+    [data-testid="stAlert"][kind="error"] {
+        background: #fff1f2 !important;
+        border-left: 4px solid #ef4444 !important;
+    }
+    [data-testid="stAlert"][kind="warning"] {
+        background: #fffbeb !important;
+        border-left: 4px solid #f59e0b !important;
+    }
+    [data-testid="stAlert"][kind="info"] {
+        background: #eff6ff !important;
+        border-left: 4px solid #3b82f6 !important;
     }
 
     /* ── 11. Plotly chart container ── */
     [data-testid="stPlotlyChart"] {
-        background: #ffffff;
-        border-radius: 14px !important;
+        background: #ffffff !important;
+        border-radius: 16px !important;
         overflow: hidden !important;
-        box-shadow: 0 0 0 1px rgba(15,23,42,.06), 0 2px 8px rgba(15,23,42,.03) !important;
+        border: 1px solid #e4e9f0 !important;
+        box-shadow: 0 1px 4px rgba(15,23,42,.04) !important;
     }
 
     /* ── 12. DataFrame ── */
     [data-testid="stDataFrame"] {
-        border-radius: 12px !important;
+        border-radius: 14px !important;
         overflow: hidden !important;
-        box-shadow: 0 0 0 1px rgba(15,23,42,.06) !important;
+        border: 1px solid #e4e9f0 !important;
+        box-shadow: 0 1px 4px rgba(15,23,42,.04) !important;
     }
     [data-testid="stDataFrame"] table {
         font-size: 13px !important;
         font-variant-numeric: tabular-nums !important;
+        font-family: 'JetBrains Mono', monospace !important;
     }
 
     /* ── 13. Expander ── */
     [data-testid="stExpander"] {
         background: #fff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 12px !important;
+        border: 1px solid #e4e9f0 !important;
+        border-radius: 14px !important;
         overflow: hidden !important;
+        box-shadow: 0 1px 3px rgba(15,23,42,.03) !important;
     }
     [data-testid="stExpander"] summary {
         font-weight: 600 !important;
         font-size: 13.5px !important;
-        color: #374151 !important;
-        padding: 14px 16px !important;
+        color: #1e293b !important;
+        padding: 14px 18px !important;
     }
 
-    /* ── 14. Multiselect ── */
-    [data-testid="stMultiSelect"] > div > div {
-        border-radius: 8px !important;
+    /* ── 14. Form inputs ── */
+    [data-testid="stMultiSelect"] > div > div,
+    [data-testid="stSelectbox"] > div > div {
+        border-radius: 10px !important;
         font-size: 13px !important;
+        border-color: #d1d9e6 !important;
     }
 
     /* ── 15. Spinner ── */
     [data-testid="stSpinner"] { color: #2563eb !important; }
 
-    /* ── 16. Info box ── */
-    .stInfo {
-        background: #eff6ff !important;
-        border-left: 4px solid #3b82f6 !important;
-        border-radius: 8px !important;
-    }
-
-    /* ── 17. Progress bar ── */
+    /* ── 16. Progress bar ── */
     [data-testid="stProgressBar"] > div > div {
-        background: linear-gradient(90deg, #2563eb, #7c3aed) !important;
-        border-radius: 4px !important;
+        background: linear-gradient(90deg, #2563eb, #6366f1) !important;
+        border-radius: 6px !important;
     }
 
-    /* ── 18. Subheader left-accent ── */
+    /* ── 17. Subheader accent (Streamlit native h2) ── */
     [data-testid="stHeadingWithActionElements"] h2 {
-        padding-left: 10px !important;
-        border-left: 3px solid #2563eb !important;
+        padding-left: 12px !important;
+        border-left: 4px solid #2563eb !important;
         margin-top: 0 !important;
+    }
+
+    /* ── 18. Tab bar (if used) ── */
+    [data-testid="stTabs"] [role="tablist"] {
+        border-bottom: 2px solid #e4e9f0 !important;
+    }
+    [data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+        color: #2563eb !important;
+        border-bottom: 2px solid #2563eb !important;
+        font-weight: 600 !important;
     }
     </style>
     """,
@@ -317,36 +335,54 @@ if "page" not in st.session_state:
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    # Brand
+    # ── Brand ─────────────────────────────────────────────────────────────────
     st.html(
-        "<div style='padding:8px 4px 20px;font-family:Inter,sans-serif;'>"
-        "<div style='font-size:22px;font-weight:800;color:#f1f5f9;"
-        "letter-spacing:-.03em;line-height:1;'>📊 LoanLens</div>"
-        "<div style='font-size:11px;color:#475569;font-weight:500;"
-        "letter-spacing:.06em;text-transform:uppercase;margin-top:5px;'>"
+        "<div style='padding:20px 12px 18px;font-family:Inter,sans-serif;'>"
+        # Glow disc behind icon
+        "<div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>"
+        "<div style='width:36px;height:36px;border-radius:10px;"
+        "background:linear-gradient(135deg,#2563eb,#6366f1);"
+        "display:flex;align-items:center;justify-content:center;"
+        "font-size:18px;box-shadow:0 0 16px rgba(99,102,241,.4);'>📊</div>"
+        "<div>"
+        "<div style='font-size:18px;font-weight:800;"
+        "background:linear-gradient(90deg,#93c5fd,#c4b5fd);-webkit-background-clip:text;"
+        "-webkit-text-fill-color:transparent;background-clip:text;"
+        "letter-spacing:-.04em;line-height:1;'>LoanLens</div>"
+        "<div style='font-size:9.5px;color:#334466;font-weight:600;"
+        "letter-spacing:.12em;text-transform:uppercase;margin-top:2px;'>"
         "Portfolio Intelligence</div>"
+        "</div>"
+        "</div>"
         "</div>"
     )
     st.divider()
 
-    # Navigation — active item rendered as a styled div (no split tags);
-    # inactive items are st.buttons styled via global CSS.
+    # ── Navigation ────────────────────────────────────────────────────────────
     current = st.session_state["page"]
     for key, icon, label, is_ai in _PAGES:
         ai_badge = (
-            "<span style='background:#7c3aed;color:#fff;font-size:9px;font-weight:700;"
-            "padding:2px 6px;border-radius:8px;letter-spacing:.05em;margin-left:6px;"
-            "vertical-align:middle;'>AI</span>"
+            "<span style='background:linear-gradient(135deg,#7c3aed,#6366f1);"
+            "color:#fff;font-size:8.5px;font-weight:700;"
+            "padding:2px 6px;border-radius:6px;letter-spacing:.06em;"
+            "margin-left:6px;vertical-align:middle;'>AI</span>"
             if is_ai else ""
         )
         display_label = f"{icon}&nbsp;&nbsp;{label}{ai_badge}"
 
         if current == key:
             st.html(
-                f"<div style='background:rgba(37,99,235,.18);border-left:3px solid #3b82f6;"
-                f"padding:9px 14px 9px 11px;border-radius:8px;color:#93c5fd;"
-                f"font-size:13.5px;font-weight:600;margin:1px 0;cursor:default;"
-                f"letter-spacing:.01em;font-family:Inter,sans-serif;'>"
+                f"<div style='"
+                f"background:linear-gradient(135deg,rgba(37,99,235,.22),rgba(99,102,241,.14));"
+                f"border:1px solid rgba(99,130,245,.28);"
+                f"padding:10px 14px;border-radius:12px;color:#93c5fd;"
+                f"font-size:13px;font-weight:600;margin:2px 0;cursor:default;"
+                f"letter-spacing:.005em;font-family:Inter,sans-serif;"
+                f"box-shadow:0 2px 10px rgba(37,99,235,.12);"
+                f"display:flex;align-items:center;'>"
+                f"<span style='width:5px;height:5px;border-radius:50%;"
+                f"background:#60a5fa;margin-right:10px;flex-shrink:0;"
+                f"box-shadow:0 0 6px #60a5fa;display:inline-block;'></span>"
                 f"{display_label}</div>"
             )
         else:
@@ -355,20 +391,23 @@ with st.sidebar:
                 st.session_state["page"] = key
                 st.rerun()
 
-    # Footer with external links (Prompt 18)
+    # ── Footer ────────────────────────────────────────────────────────────────
     st.divider()
     st.html(
-        "<div style='font-family:Inter,sans-serif;padding:4px 0 48px;'>"
-        "<div style='font-size:10px;color:#475569;font-weight:600;"
-        "text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;'>"
-        "Links</div>"
-        "<div style='display:flex;flex-direction:column;gap:4px;'>"
+        "<div style='font-family:Inter,sans-serif;padding:2px 4px 48px;'>"
+        "<div style='font-size:9px;color:#253045;font-weight:700;"
+        "text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;'>"
+        "Resources</div>"
+        "<div style='display:flex;flex-direction:column;gap:6px;'>"
         "<a href='https://github.com/ShrikantLambe/loanlens' target='_blank' "
-        "style='font-size:12px;color:#64748b;text-decoration:none;'>"
-        "⌥ GitHub — Source Code</a>"
+        "style='display:flex;align-items:center;gap:8px;font-size:12px;"
+        "color:#4a6080;text-decoration:none;padding:6px 8px;border-radius:8px;"
+        "transition:background .14s;'>"
+        "<span style='font-size:13px;'>⌥</span> GitHub — Source Code</a>"
         "<a href='https://shrikantlambe.github.io' target='_blank' "
-        "style='font-size:12px;color:#64748b;text-decoration:none;'>"
-        "◈ Portfolio — Shrikant Lambe</a>"
+        "style='display:flex;align-items:center;gap:8px;font-size:12px;"
+        "color:#4a6080;text-decoration:none;padding:6px 8px;border-radius:8px;'>"
+        "<span style='font-size:13px;'>◈</span> Portfolio — Shrikant Lambe</a>"
         "</div>"
         "</div>"
     )
@@ -431,22 +470,35 @@ def _health_strip() -> None:
         "font-family:Inter,sans-serif;"
     )
 
-    delinq_chip_style = chip.format(bg="#eff6ff", fg="#1d4ed8")
-    default_chip_style = chip.format(bg="#eff6ff", fg="#1d4ed8")
-    cov_chip_style = chip.format(bg=cov_bg, fg=cov_fg)
-    rec_chip_style = chip.format(bg=rec_bg, fg=rec_fg)
+    # Chip colours tuned for the dark command-bar background
+    cov_chip  = f"background:{cov_bg};color:{cov_fg}"
+    rec_chip  = f"background:{rec_bg};color:{rec_fg}"
+    num_chip  = "background:rgba(37,99,235,.15);color:#93c5fd"
+    chip_base = (
+        "font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;"
+        "white-space:nowrap;font-family:Inter,sans-serif;letter-spacing:.01em;"
+    )
     st.html(
-        f"<div style='display:flex;gap:6px;align-items:center;flex-wrap:wrap;"
-        f"padding:6px 0 12px;border-bottom:1px solid #f1f5f9;margin-bottom:4px;'>"
-        f"<span style='background:#f1f5f9;color:#94a3b8;font-size:10px;font-weight:500;"
-        f"padding:2px 8px;border-radius:12px;white-space:nowrap;"
-        f"font-family:Inter,sans-serif;'>Demo · Synthetic data</span>"
-        f"<span style='color:#e2e8f0;font-size:10px;'>|</span>"
-        f"<span style='{cov_chip_style}'>{cov_txt}</span>"
-        f"<span style='{delinq_chip_style}'>Delinquency {delinq:.2f}%</span>"
-        f"<span style='{default_chip_style}'>Default {default:.2f}%</span>"
-        f"<span style='{rec_chip_style}'>{rec_txt}</span>"
-        f"</div>"
+        "<div style='"
+        "background:linear-gradient(135deg,#0c1a30,#111f3a);"
+        "border:1px solid rgba(99,130,200,.14);"
+        "border-radius:14px;"
+        "padding:10px 18px;"
+        "margin-bottom:18px;"
+        "display:flex;gap:8px;align-items:center;flex-wrap:wrap;"
+        "box-shadow:0 2px 12px rgba(8,15,35,.15);"
+        "font-family:Inter,sans-serif;'>"
+        # Demo label
+        "<span style='font-size:10px;font-weight:600;color:#2a3f5f;"
+        "letter-spacing:.08em;text-transform:uppercase;padding-right:4px;'>"
+        "Demo</span>"
+        "<span style='color:#1e2d45;font-size:12px;margin:0 2px;'>·</span>"
+        # Status chips
+        f"<span style='{chip_base}{cov_chip}'>{cov_txt}</span>"
+        f"<span style='{chip_base}{num_chip}'>Delinq {delinq:.2f}%</span>"
+        f"<span style='{chip_base}{num_chip}'>Default {default:.2f}%</span>"
+        f"<span style='{chip_base}{rec_chip}'>{rec_txt}</span>"
+        "</div>"
     )
 
 
