@@ -171,8 +171,11 @@ def render() -> None:
         key="spv_comparison",
         events={"click": "function(params){return params.name}"},
     )
-    if clicked and clicked in spv["spv_id"].values:
-        st.session_state["spv_focus"] = clicked
+    # .values with PyArrow backend raises NotImplementedError on __contains__.
+    # Use .tolist() for a plain Python list; cast clicked to str defensively.
+    _spv_ids = spv["spv_id"].tolist()
+    if clicked and str(clicked) in _spv_ids:
+        st.session_state["spv_focus"] = str(clicked)
     elif "spv_focus" not in st.session_state:
         st.session_state["spv_focus"] = None
 
