@@ -130,12 +130,29 @@ def render() -> None:
 
     weekly["week_date"] = pd.to_datetime(weekly["week_date"])
     weekly = weekly.sort_values("week_date")
-    latest_week  = weekly.iloc[-1]
-    prior_week   = weekly[weekly["week_date"] <= weekly["week_date"].max() - pd.Timedelta(days=30)]
+
+    # ── Apply sidebar filters ────────────────────────────────────────────────
+    _period_days = {"3 Months": 90, "6 Months": 180, "12 Months": 365, "All Time": 99999}
+    _period      = st.session_state.get("filter_period", "12 Months")
+    _sel_plat    = [p.lower() for p in st.session_state.get("filter_platforms", ["DoorDash","Amazon","Mindbody","Worldpay","Shopify"])]
+    _sel_spvs    = st.session_state.get("filter_spvs", ["SPV-A","SPV-B","SPV-C"])
+
+    _days = _period_days.get(_period, 365)
+    if _days < 99999:
+        weekly = weekly[weekly["week_date"] >= weekly["week_date"].max() - pd.Timedelta(days=_days)]
+    if _sel_plat:
+        originations = originations[originations["platform"].isin(_sel_plat)]
+    if _sel_spvs:
+        spv = spv[spv["spv_id"].isin(_sel_spvs)]
+
+    latest_week  = weekly.iloc[-1] if not weekly.empty else None
+    prior_week   = weekly[weekly["week_date"] <= weekly["week_date"].max() - pd.Timedelta(days=30)] if not weekly.empty else weekly
     prior        = prior_week.iloc[-1] if not prior_week.empty else None
 
     def _delta(col: str) -> float | None:
-        return float(latest_week[col]) - float(prior[col]) if prior is not None else None
+        if latest_week is None or prior is None:
+            return None
+        return float(latest_week[col]) - float(prior[col])
 
     # Summary row — single source of truth for KPI cards
     row = summary.iloc[0] if not summary.empty else {}
@@ -199,18 +216,18 @@ def render() -> None:
 
     st.divider()
 
-    # ── 3. CHARTS — side-by-side 2-column grid (like the ECharts gallery reference) ──
+    # ── 3. CHARTS — side-by-side 2-column grid ───────────────────────────────
     min_covenant = float(spv["covenant_max_delinquency_pct"].min()) if not spv.empty else None
-    last_year    = weekly[weekly["week_date"] >= weekly["week_date"].max() - pd.Timedelta(days=365)]
+    # `weekly` is already filtered to the selected reporting period
 
     ch_left, ch_right = st.columns(2)
     with ch_left:
         section_header(
             "📉 Delinquency Trend",
-            "Rolling 12 months · 4-wk avg · Covenant limit marked",
+            f"{_period} · 4-wk avg · Covenant limit marked",
         )
         ec.render(
-            ec.delinquency_trend_option(last_year, covenant_limit=min_covenant),
+            ec.delinquency_trend_option(weekly, covenant_limit=min_covenant),
             height="400px", key="trend_delinq",
         )
     with ch_right:

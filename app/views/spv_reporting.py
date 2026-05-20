@@ -141,6 +141,14 @@ def render() -> None:
         st.info("No SPV data available. Run `make dev` first.")
         return
 
+    # Apply SPV filter from sidebar
+    _sel_spvs = st.session_state.get("filter_spvs", ["SPV-A", "SPV-B", "SPV-C"])
+    if _sel_spvs:
+        spv = spv[spv["spv_id"].isin(_sel_spvs)]
+    if spv.empty:
+        st.info("No data for the selected SPV facilities. Adjust filters in the sidebar.")
+        return
+
     # 1. BREACH BANNER
     breaches = spv[spv["covenant_delinquency_breach"].astype(bool)]
     if not breaches.empty:

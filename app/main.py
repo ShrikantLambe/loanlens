@@ -205,6 +205,41 @@ st.markdown(
         box-shadow: none !important;
     }
 
+    /* ── Sidebar filter widget styling ── */
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] .stSelectbox label,
+    section[data-testid="stSidebar"] .stMultiSelect label {
+        color: #4a6080 !important;
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: .09em !important;
+    }
+    /* Select / multiselect input box on dark background */
+    section[data-testid="stSidebar"] [data-testid="stSelectbox"] > div > div,
+    section[data-testid="stSidebar"] [data-testid="stMultiSelect"] > div > div {
+        background: rgba(255,255,255,.06) !important;
+        border: 1px solid rgba(99,130,200,.25) !important;
+        color: #c8d8f0 !important;
+        font-size: 12px !important;
+        border-radius: 8px !important;
+    }
+    /* Selected tags in multiselect */
+    section[data-testid="stSidebar"] [data-baseweb="tag"] {
+        background: rgba(37,99,235,.3) !important;
+        color: #93c5fd !important;
+    }
+    /* Reset button in filter area */
+    section[data-testid="stSidebar"] .filter-reset > button {
+        background: rgba(239,68,68,.12) !important;
+        color: #fca5a5 !important;
+        border: 1px solid rgba(239,68,68,.25) !important;
+        border-radius: 8px !important;
+        font-size: 11px !important;
+        height: 30px !important;
+        padding: 0 10px !important;
+    }
+
     /* ── 9. Main-area buttons ── */
     .main .stButton > button[kind="primary"],
     .main .stButton > button[data-testid="baseButton-primary"] {
@@ -391,6 +426,13 @@ _PAGES = [
 if "page" not in st.session_state:
     st.session_state["page"] = "overview"
 
+# ── Filter defaults (set once; widgets keep state on reruns) ─────────────────
+_ALL_PLATFORMS = ["DoorDash", "Amazon", "Mindbody", "Worldpay", "Shopify"]
+_ALL_SPVS      = ["SPV-A", "SPV-B", "SPV-C"]
+st.session_state.setdefault("filter_period",    "12 Months")
+st.session_state.setdefault("filter_platforms", _ALL_PLATFORMS)
+st.session_state.setdefault("filter_spvs",      _ALL_SPVS)
+
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     # ── Brand ─────────────────────────────────────────────────────────────────
@@ -449,6 +491,60 @@ with st.sidebar:
             if st.button(btn_label, key=f"nav_{key}", width="stretch"):
                 st.session_state["page"] = key
                 st.rerun()
+
+    # ── Filters ──────────────────────────────────────────────────────────────
+    st.divider()
+    st.html(
+        "<div style='font-size:9px;color:#253045;font-weight:700;"
+        "text-transform:uppercase;letter-spacing:.12em;"
+        "padding:0 2px 6px;font-family:Inter,sans-serif;'>⚙ Filters</div>"
+    )
+
+    st.selectbox(
+        "Reporting Period",
+        options=["3 Months", "6 Months", "12 Months", "All Time"],
+        index=["3 Months", "6 Months", "12 Months", "All Time"].index(
+            st.session_state.get("filter_period", "12 Months")
+        ),
+        key="filter_period",
+    )
+
+    st.multiselect(
+        "Platforms",
+        options=_ALL_PLATFORMS,
+        default=st.session_state.get("filter_platforms", _ALL_PLATFORMS),
+        key="filter_platforms",
+    )
+
+    st.multiselect(
+        "SPV Facilities",
+        options=_ALL_SPVS,
+        default=st.session_state.get("filter_spvs", _ALL_SPVS),
+        key="filter_spvs",
+    )
+
+    # Active filter summary chip
+    _active = []
+    if st.session_state.get("filter_period", "12 Months") != "12 Months":
+        _active.append(st.session_state["filter_period"])
+    if len(st.session_state.get("filter_platforms", _ALL_PLATFORMS)) < len(_ALL_PLATFORMS):
+        _active.append(f"{len(st.session_state['filter_platforms'])} platforms")
+    if len(st.session_state.get("filter_spvs", _ALL_SPVS)) < len(_ALL_SPVS):
+        _active.append(f"{len(st.session_state['filter_spvs'])} SPVs")
+
+    if _active:
+        _chip_txt = " · ".join(_active)
+        st.html(
+            f"<div style='background:rgba(37,99,235,.15);color:#93c5fd;"
+            f"font-size:10px;font-weight:600;padding:4px 10px;border-radius:20px;"
+            f"font-family:Inter,sans-serif;margin:4px 0;'>"
+            f"Active: {_chip_txt}</div>"
+        )
+        if st.button("Reset filters", key="reset_filters"):
+            st.session_state["filter_period"]    = "12 Months"
+            st.session_state["filter_platforms"] = _ALL_PLATFORMS
+            st.session_state["filter_spvs"]      = _ALL_SPVS
+            st.rerun()
 
     # ── Footer ────────────────────────────────────────────────────────────────
     st.divider()
