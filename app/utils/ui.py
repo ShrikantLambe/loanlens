@@ -30,20 +30,15 @@ def page_header(
         if badge else ""
     )
     st.html(
-        f"<div style='margin-bottom:24px;font-family:Inter,sans-serif;'>"
-        # Title row
+        f"<div style='margin-bottom:10px;font-family:Inter,sans-serif;'>"
         f"<div style='display:flex;align-items:center;flex-wrap:wrap;"
-        f"gap:12px;margin-bottom:8px;'>"
-        f"<div style='font-size:30px;font-weight:800;color:#060d1f;"
-        f"letter-spacing:-.045em;line-height:1.1;'>{title}</div>"
+        f"gap:10px;margin-bottom:4px;'>"
+        f"<div style='font-size:26px;font-weight:800;color:#060d1f;"
+        f"letter-spacing:-.04em;line-height:1.1;'>{title}</div>"
         f"{badge_html}"
         f"</div>"
-        # Subtitle
-        f"<div style='font-size:14px;color:#5c6f85;line-height:1.6;"
+        f"<div style='font-size:13.5px;color:#5c6f85;line-height:1.55;"
         f"max-width:760px;'>{subtitle}</div>"
-        # Separator
-        f"<div style='height:1px;background:linear-gradient(90deg,"
-        f"#e4e9f0 0%,transparent 100%);margin-top:16px;'></div>"
         f"</div>"
     )
 

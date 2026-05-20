@@ -40,10 +40,6 @@ def _status_banner(spv: pd.DataFrame, current_delinq: float) -> None:
             "Lender has right to pull funding. Immediate review required.",
             icon="🔴",
         )
-        if st.button("→ View SPV Reporting", key="banner_goto_spv",
-                     help="Jump to the SPV Reporting page for full facility detail."):
-            st.session_state["page"] = "spv"
-            st.rerun()
         return
 
     # Check headroom tightness (< 2pp headroom = amber)

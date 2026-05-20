@@ -169,18 +169,28 @@ st.markdown(
         border: none !important;
         text-align: left !important;
         justify-content: flex-start !important;
+        align-items: center !important;
         color: #556070 !important;
         font-size: 13px !important;
         font-weight: 500 !important;
-        padding: 9px 12px !important;
+        padding: 9px 14px !important;
         border-radius: 10px !important;
-        height: auto !important;
-        min-height: 38px !important;
-        line-height: 1.4 !important;
+        height: 38px !important;
+        line-height: 38px !important;
         box-shadow: none !important;
         width: 100% !important;
         letter-spacing: .005em !important;
         transition: background .14s ease, color .14s ease !important;
+        display: flex !important;
+        vertical-align: middle !important;
+    }
+    /* Zero Streamlit's inner wrapper so only button padding governs position */
+    section[data-testid="stSidebar"] .stButton > button > p,
+    section[data-testid="stSidebar"] .stButton > button > div,
+    section[data-testid="stSidebar"] .stButton > button > span {
+        padding: 0 !important;
+        margin: 0 !important;
+        line-height: 1 !important;
         display: flex !important;
         align-items: center !important;
     }
@@ -321,25 +331,32 @@ st.markdown(
         font-weight: 600 !important;
     }
 
-    /* ── 19. KPI card + sparkline unification ── */
+    /* ── 19. KPI card + sparkline unification ──────────────────────────────────
+       Streamlit column data-testid is "stColumn", NOT "column".
+       Using the wrong selector was why min-height had no effect.             */
 
-    /* Uniform left border (no colored accent) — sparkline provides the color signal */
-    div[data-testid="column"] div[data-testid="stMetric"] {
+    [data-testid="stColumn"] [data-testid="stMetric"],
+    [data-testid="stHorizontalBlock"] [data-testid="stMetric"] {
         border-left: 1px solid #e4e9f0 !important;
         border-radius: 14px 14px 0 0 !important;
         border-bottom: 0 !important;
         padding-bottom: 6px !important;
         margin-bottom: 0 !important;
+        /* Equal height: tallest card (with delta) is ~120px; 130px floors all cards */
+        min-height: 130px !important;
     }
-    div[data-testid="column"] .element-container:has(div[data-testid="stMetric"]) {
+    [data-testid="stColumn"] .element-container:has([data-testid="stMetric"]),
+    [data-testid="stHorizontalBlock"] .element-container:has([data-testid="stMetric"]) {
         margin-bottom: 0 !important;
         padding-bottom: 0 !important;
     }
-    div[data-testid="column"] .element-container:has(div[data-testid="stMetric"]) + .element-container {
+    [data-testid="stColumn"] .element-container:has([data-testid="stMetric"]) + .element-container,
+    [data-testid="stHorizontalBlock"] .element-container:has([data-testid="stMetric"]) + .element-container {
         margin-top: 0 !important;
         padding-top: 0 !important;
     }
-    div[data-testid="column"] .element-container:has(div[data-testid="stMetric"]) + .element-container iframe {
+    [data-testid="stColumn"] .element-container:has([data-testid="stMetric"]) + .element-container iframe,
+    [data-testid="stHorizontalBlock"] .element-container:has([data-testid="stMetric"]) + .element-container iframe {
         border: 1px solid #e4e9f0 !important;
         border-top: 0 !important;
         border-radius: 0 0 14px 14px !important;
@@ -349,28 +366,6 @@ st.markdown(
 
     /* ── 20. ECharts component container ── */
     [data-testid="stCustomComponentV1"] { border-radius: 16px !important; }
-
-    /* ── FIX 1: Nav alignment ──────────────────────────────────────────────────
-       Root cause: Streamlit wraps button text in <p> which has its own margin/
-       padding that offsets text right vs the active pill div.
-       Fix: zero the inner <p>, set controlled padding on the button itself.   */
-    section[data-testid="stSidebar"] .stButton > button {
-        padding: 9px 12px 9px 14px !important;
-    }
-    section[data-testid="stSidebar"] .stButton > button > p,
-    section[data-testid="stSidebar"] .stButton > button > div {
-        padding: 0 !important;
-        margin: 0 !important;
-        line-height: inherit !important;
-    }
-
-    /* ── FIX 2: KPI equal heights ───────────────────────────────────────────────
-       Cards with delta: 20px pad-top + 16px label + 8px gap + 38px value
-                         + 8px gap + 24px delta + 6px pad-bottom = 120px
-       Cards without:   20+16+8+38+6 = 88px → min-height forces them to match */
-    div[data-testid="column"] div[data-testid="stMetric"] {
-        min-height: 130px !important;
-    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -440,10 +435,11 @@ with st.sidebar:
                 f"<div style='"
                 f"background:linear-gradient(135deg,rgba(37,99,235,.22),rgba(99,102,241,.14));"
                 f"border:1px solid rgba(99,130,245,.28);"
-                f"padding:9px 12px 9px 14px;border-radius:12px;color:#93c5fd;"
-                f"font-size:13px;font-weight:600;margin:2px 0;cursor:default;"
+                f"padding:0 14px;height:38px;border-radius:10px;color:#93c5fd;"
+                f"font-size:13px;font-weight:600;margin:1px 0;cursor:default;"
                 f"letter-spacing:.005em;font-family:Inter,sans-serif;"
-                f"box-shadow:0 2px 10px rgba(37,99,235,.12);'>"
+                f"box-shadow:0 2px 10px rgba(37,99,235,.12);"
+                f"display:flex;align-items:center;'>"
                 f"{display_label}</div>"
             )
         else:
