@@ -446,7 +446,7 @@ with st.sidebar:
             #   = non-breaking space (same as &nbsp; in active pill HTML)
             # Two regular spaces collapse to one in HTML rendering, causing misalignment
             btn_label = f"{icon}  {label}{'  ✦' if is_ai else ''}"
-            if st.button(btn_label, key=f"nav_{key}", use_container_width=True):
+            if st.button(btn_label, key=f"nav_{key}", width="stretch"):
                 st.session_state["page"] = key
                 st.rerun()
 

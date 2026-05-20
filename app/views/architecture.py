@@ -178,19 +178,19 @@ Python version constraints on the cloud runtime.
         st.link_button(
             "GitHub — View Source",
             "https://github.com/ShrikantLambe/loanlens",
-            use_container_width=True,
+            width="stretch",
         )
     with c2:
         st.link_button(
             "dbt Docs — Model Lineage",
             "https://github.com/ShrikantLambe/loanlens/tree/main/dbt_loanlens/models",
-            use_container_width=True,
+            width="stretch",
         )
     with c3:
         st.link_button(
             "Portfolio — Shrikant Lambe",
             "https://shrikantlambe.github.io",
-            use_container_width=True,
+            width="stretch",
         )
 
     st.divider()

@@ -151,7 +151,7 @@ def render() -> None:
             f"</div>"
         )
     with col_btn:
-        if st.button("↻ Rerun", use_container_width=True, help="Simulate a pipeline re-run"):
+        if st.button("↻ Rerun", width="stretch", help="Simulate a pipeline re-run"):
             st.session_state["recon_rerun_time"] = (
                 pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
             )
@@ -217,7 +217,7 @@ def render() -> None:
         return "color: #dc2626; font-weight: bold"
 
     styled = display.style.map(_color_status, subset=["Status"])
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+    st.dataframe(styled, width="stretch", hide_index=True)
 
     st.divider()
 

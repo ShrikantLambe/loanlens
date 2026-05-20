@@ -187,4 +187,4 @@ def render() -> None:
         "max_months_on_book":  "Months Tracked",
         "final_default_rate":  "Peak Default Rate",
     })
-    st.dataframe(disp, use_container_width=True, hide_index=True)
+    st.dataframe(disp, width="stretch", hide_index=True)

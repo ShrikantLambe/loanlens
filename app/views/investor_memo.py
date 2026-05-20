@@ -146,7 +146,7 @@ def render() -> None:
             "</div>"
         )
         generate = st.button(
-            "Generate AI Commentary →", type="primary", use_container_width=True
+            "Generate AI Commentary →", type="primary", width="stretch"
         )
         pdf_btn = False
     else:
@@ -154,12 +154,12 @@ def render() -> None:
         col_regen, col_pdf = st.columns([1, 1])
         with col_regen:
             generate = st.button(
-                "↻ Regenerate", use_container_width=True,
+                "↻ Regenerate", width="stretch",
                 help="Call Claude again to refresh the commentary.",
             )
         with col_pdf:
             pdf_btn = st.button(
-                "⬇ Download PDF", type="primary", use_container_width=True,
+                "⬇ Download PDF", type="primary", width="stretch",
                 help="Export this memo as a PDF report.",
             )
 
@@ -224,7 +224,7 @@ def render() -> None:
                     data=pdf_bytes,
                     file_name=f"loanlens_memo_{period}.pdf",
                     mime="application/pdf",
-                    use_container_width=True,
+                    width="stretch",
                 )
             except Exception as e:
                 st.error(f"PDF generation failed: {e}")
@@ -335,7 +335,7 @@ def render() -> None:
         st.divider()
         section_header("SPV Covenant Status")
         cov_df = pd.DataFrame(covenant_rows)
-        st.dataframe(cov_df, use_container_width=True, hide_index=True)
+        st.dataframe(cov_df, width="stretch", hide_index=True)
 
     # --- Footer ---
     st.divider()
